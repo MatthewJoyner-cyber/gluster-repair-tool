@@ -32,7 +32,7 @@ public source attribution; removing private context does not remove obligations.
 
 Use separate private logs while working. The interactive handoff source can
 contain raw names and paths; do not share it. A maintainer diagnostic bundle
-uses pseudonyms and private output permissions, but every copied file still
+exports defined metadata with pseudonyms and private permissions. Every exported file still
 needs human review before a user chooses to share it. The tool sends nothing.
 
 The original repository and its history remain private reference material.

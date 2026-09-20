@@ -56,6 +56,7 @@ gluster_heal_tool/canary_shared.py
 gluster_heal_tool/cli.py
 gluster_heal_tool/controller_cycle_report.py
 gluster_heal_tool/controller_paths.py
+gluster_heal_tool/diagnostic_metadata.py
 gluster_heal_tool/decisions.py
 gluster_heal_tool/directory_tie.py
 gluster_heal_tool/evidence_provenance.py
@@ -118,6 +119,7 @@ tests/test_controller_cycle_report.py
 tests/test_controller_paths.py
 tests/test_decisions.py
 tests/test_deploy_preview.py
+tests/test_diagnostic_metadata.py
 tests/test_directory_recipe.py
 tests/test_directory_tie.py
 tests/test_evidence_logging.py

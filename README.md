@@ -80,8 +80,9 @@ before fallback; operational errors cannot count as harmless missing targets.
 results through ordinary exceptions and process loss. Live qualification and
 the other open findings still block unattended release use.
 The optional [maintainer diagnostic bundle](docs/SUPPORT_EVIDENCE.md) lets a
-user prepare pseudonymized metadata to share after review; it does not read
-server file contents or transmit anything.
+user prepare pseudonymized metadata to share after review. It exports defined
+fields, records unsupported formats as omitted, and replaces names and paths
+with aliases. It does not read server file contents or transmit anything.
 
 ## Local storage
 

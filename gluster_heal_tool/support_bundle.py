@@ -1,15 +1,16 @@
 # SPDX-License-Identifier: GPL-2.0-only
-"""Prepare a reviewable, local text-only maintainer handoff from saved evidence."""
+"""Prepare a reviewable, local metadata-only maintainer handoff from saved evidence."""
 from __future__ import annotations
 
 import argparse
 import hashlib
-import ipaddress
 import json
 import os
 import re
 import stat
 from pathlib import Path
+
+from .diagnostic_metadata import MetadataExporter
 
 
 ALLOWED_ARTIFACTS = frozenset({
@@ -18,18 +19,6 @@ ALLOWED_ARTIFACTS = frozenset({
     "apply", "execute_results", "decisions", "summary", "assistants",
 })
 MAX_TEXT_BYTES = 8 * 1024 * 1024
-PRIVATE_PATTERN = re.compile(
-    r"[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}|/(?:g?home)/[^/\s]+"
-)
-IPV4_PATTERN = re.compile(r"(?<![\w.])(?:\d{1,3}\.){3}\d{1,3}(?![\w.])")
-IPV6_PATTERN = re.compile(r"(?<![\w:])(?=[0-9A-Fa-f:]*:[0-9A-Fa-f:]*:)[0-9A-Fa-f:]{3,}(?![\w:])")
-BRICK_HOST_PATTERN = re.compile(r"(?im)^\s*Brick\s+([A-Za-z0-9._-]+):/")
-HOST_FIELD_PATTERN = re.compile(r'''(?im)(?:^|[,{])\s*["']?(?:Hostname|Host|source_host)["']?\s*[:=]\s*["']?([A-Za-z0-9._-]+)''')
-CREDENTIAL_PATTERN = re.compile(
-    r"(?i)(?:password|passwd|secret|token|api[_-]?key|authorization)\s*[:=]\s*(?!\[REDACTED\])\S+"
-)
-URL_PATTERN = re.compile(r"https?://\S+", re.IGNORECASE)
-PRIVATE_KEY_PATTERN = re.compile(r"-----BEGIN (?:[A-Z]+ )?PRIVATE KEY-----")
 FILE_CONTENT_KEYS = frozenset({
     "content", "file_content", "file_contents", "content_bytes",
     "payload_bytes", "content_b64", "data_b64", "base64_payload",
@@ -37,20 +26,20 @@ FILE_CONTENT_KEYS = frozenset({
 FILE_CONTENT_FIELD = re.compile(
     r"(?im)^\s*(?:file[-_ ]?contents?|payload[-_ ]?bytes?|content[-_ ]?b64|data[-_ ]?b64)\s*[:=]"
 )
-DOCUMENTATION_NETWORKS = tuple(ipaddress.ip_network(value) for value in (
-    "192.0.2.0/24", "198.51.100.0/24", "203.0.113.0/24",
-))
-ALIAS_CATEGORIES = frozenset({"server", "organization", "ip", "person", "account", "path"})
+IDENTIFIER_TYPES = frozenset({"server", "organization", "ip", "person", "account", "path", "secret"})
 
 
-def _real_ip(value: str) -> bool:
-    try:
-        address = ipaddress.ip_address(value)
-    except ValueError:
-        return False
-    return not (address.is_loopback or address.is_unspecified or any(
-        address in network for network in DOCUMENTATION_NETWORKS
-    ))
+def _private_values(identifiers: list[str]) -> list[str]:
+    values = []
+    for item in identifiers:
+        category, separator, value = item.partition(":")
+        value = value.strip() if separator and category in IDENTIFIER_TYPES else item
+        if not value:
+            raise ValueError("private identifier entry has an empty value")
+        if value in values:
+            raise ValueError("duplicate private identifier entry")
+        values.append(value)
+    return values
 
 
 def _contains_file_content(content: str) -> bool:
@@ -58,7 +47,7 @@ def _contains_file_content(content: str) -> bool:
         return True
     try:
         parsed = json.loads(content)
-    except json.JSONDecodeError:
+    except (ValueError, RecursionError):
         return False
 
     def visit(value: object) -> bool:
@@ -71,68 +60,10 @@ def _contains_file_content(content: str) -> bool:
             return any(visit(item) for item in value)
         return False
 
-    return visit(parsed)
-
-
-def _aliases(identifiers: list[str], contents: dict[str, str]) -> dict[str, str]:
-    aliases: dict[str, str] = {}
-    counts: dict[str, int] = {}
-    for item in identifiers:
-        category, separator, value = item.partition(":")
-        if separator and category in ALIAS_CATEGORIES | {"secret"}:
-            value = value.strip()
-            if not value:
-                raise ValueError("private identifier entry has an empty value")
-            if value in aliases:
-                raise ValueError("duplicate private identifier entry")
-            if category == "secret":
-                aliases[value] = "[REDACTED]"
-            else:
-                counts[category] = counts.get(category, 0) + 1
-                aliases[value] = f"{category}{counts[category]}"
-        else:
-            if item in aliases:
-                raise ValueError("duplicate private identifier entry")
-            aliases[item] = "[REDACTED]"
-    for content in contents.values():
-        for pattern in (BRICK_HOST_PATTERN, HOST_FIELD_PATTERN):
-            for match in pattern.finditer(content):
-                host = match.group(1)
-                if host.lower() != "localhost" and host not in aliases and not _real_ip(host):
-                    counts["server"] = counts.get("server", 0) + 1
-                    aliases[host] = f"server{counts['server']}"
-        for pattern in (IPV4_PATTERN, IPV6_PATTERN):
-            for match in pattern.finditer(content):
-                address = match.group()
-                if _real_ip(address) and address not in aliases:
-                    counts["ip"] = counts.get("ip", 0) + 1
-                    aliases[address] = f"ip{counts['ip']}"
-    return aliases
-
-
-def _anonymize(content: str, aliases: dict[str, str]) -> str:
-    values = sorted(aliases, key=len, reverse=True)
-    if values:
-        pattern = re.compile(r"(?<![\w.-])(?:" + "|".join(map(re.escape, values)) + r")(?![\w.-])")
-        content = pattern.sub(lambda match: aliases[match.group()], content)
-    return PRIVATE_PATTERN.sub("[REDACTED]", content)
-
-
-def _has_unlisted_sensitive_value(content: str) -> bool:
-    if any(pattern.search(content) for pattern in (
-        PRIVATE_PATTERN, CREDENTIAL_PATTERN, URL_PATTERN, PRIVATE_KEY_PATTERN,
-    )):
-        return True
-    for pattern in (BRICK_HOST_PATTERN, HOST_FIELD_PATTERN):
-        for match in pattern.finditer(content):
-            host = match.group(1)
-            if host.lower() != "localhost" and not re.fullmatch(r"(?:server|ip)\d+", host):
-                return True
-    for pattern in (IPV4_PATTERN, IPV6_PATTERN):
-        for match in pattern.finditer(content):
-            if _real_ip(match.group()):
-                return True
-    return False
+    try:
+        return visit(parsed)
+    except RecursionError as exc:
+        raise ValueError("artifact nesting exceeds metadata limits") from exc
 
 
 def _write_private_text(path: Path, content: str) -> None:
@@ -147,7 +78,7 @@ def prepare_support_bundle(
     *,
     private_identifiers: list[str],
 ) -> dict[str, object]:
-    """Copy only present text evidence; fail closed on unsafe input.
+    """Export defined metadata fields from present evidence; omit unknown formats.
 
     The caller supplies already-collected bounded artifacts. This never probes a
     brick, starts a heal crawl, or sends the bundle anywhere.
@@ -172,16 +103,19 @@ def prepare_support_bundle(
             inventory[name] = {"status": "missing"}
             continue
         try:
-            descriptor = os.open(source, os.O_RDONLY | os.O_NOFOLLOW)
+            descriptor = os.open(source, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
         except OSError as exc:
             raise ValueError(f"{name} cannot be opened as a regular artifact") from exc
-        with os.fdopen(descriptor, "rb") as input_file:
-            details = os.fstat(input_file.fileno())
+        try:
+            details = os.fstat(descriptor)
             if not stat.S_ISREG(details.st_mode):
                 raise ValueError(f"{name} is not a regular, non-symlink file")
             if details.st_size > MAX_TEXT_BYTES:
                 raise ValueError(f"{name} exceeds text artifact size limit")
-            raw = input_file.read(MAX_TEXT_BYTES + 1)
+            with os.fdopen(descriptor, "rb", closefd=False) as input_file:
+                raw = input_file.read(MAX_TEXT_BYTES + 1)
+        finally:
+            os.close(descriptor)
         if len(raw) > MAX_TEXT_BYTES:
             raise ValueError(f"{name} exceeds text artifact size limit")
         try:
@@ -193,33 +127,38 @@ def prepare_support_bundle(
         if _contains_file_content(content):
             raise ValueError(f"{name} contains file-content fields; supply metadata-only evidence")
         raw_contents[name] = content
-    aliases = _aliases(identifiers, raw_contents)
+    exporter = MetadataExporter(private_values=_private_values(identifiers))
     for name, raw_content in raw_contents.items():
-        content = _anonymize(raw_content, aliases)
-        if _has_unlisted_sensitive_value(content):
-            raise ValueError(f"unlisted private or sensitive value remains in {name}")
+        projected = exporter.export(name, raw_content)
+        if projected is None:
+            inventory[name] = {"status": "omitted_unsupported_format"}
+            continue
+        content = json.dumps(projected, indent=2, sort_keys=True) + "\n"
         prepared[name] = content
         inventory[name] = {
-            "status": "copied_redacted",
-            "file": f"{name}.txt",
+            "status": "exported_metadata",
+            "file": f"{name}.json",
             "sha256": hashlib.sha256(content.encode("utf-8")).hexdigest(),
         }
     destination.mkdir(mode=0o700)
     for name, content in prepared.items():
-        _write_private_text(destination / f"{name}.txt", content)
+        _write_private_text(destination / f"{name}.json", content)
     _write_private_text(
         destination / "inventory.json",
         json.dumps(inventory, indent=2, sort_keys=True) + "\n",
     )
-    collected = [name for name, item in inventory.items() if item["status"] == "copied_redacted"]
+    collected = [name for name, item in inventory.items() if item["status"] == "exported_metadata"]
     missing = [name for name, item in inventory.items() if item["status"] == "missing"]
+    omitted = [name for name, item in inventory.items() if item["status"] == "omitted_unsupported_format"]
     draft = (
         "Gluster Repair Tool maintainer evidence handoff (not sent)\n"
         "Observed evidence: " + (", ".join(collected) or "none") + "\n"
         "Missing requested evidence: " + (", ".join(missing) or "none") + "\n"
+        "Omitted unsupported evidence: " + (", ".join(omitted) or "none") + "\n"
+        "Metadata projections omit unknown fields and replace names with bundle-local aliases.\n"
         "Tool classifications are proposals, not proof of a broken GFID handle.\n"
         "Hypotheses and safe lab-control design require separate operator review.\n"
-        "Review every copied file and inventory before choosing what to share with the tool maintainers.\n"
+        "Review every exported file and inventory before choosing what to share with the tool maintainers.\n"
     )
     _write_private_text(destination / "maintainer-handoff.txt", draft)
     return {"inventory": inventory, "draft": draft}

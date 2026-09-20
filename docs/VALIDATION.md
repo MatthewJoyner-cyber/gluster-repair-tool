@@ -1,22 +1,29 @@
 # Migration candidate validation
 
-Maintainer diagnostic bundle behavior checked 2026-09-20 on Linux with
+Schema-backed maintainer diagnostic export checked 2026-09-20 on Linux with
 CPython 3.12.3:
 
-- A 153-file clean copy passed 825 offline tests under UID 1000 with fresh
-  HOME/XDG state; one ACL-dependent test was skipped. The focused evidence and
-  interactive suite passed 67 tests.
-- Synthetic metadata fixtures show stable `serverN`, `ipN`, and explicit
-  organization aliases across artifacts while retaining size and GFID facts.
-  The builder rejects obvious JSON/plain-text file-content fields, binary
-  input, symlinks and unlisted credentials before creating the bundle. Output
-  uses a private directory and private files, and nothing is transmitted.
-- The interactive handoff is labeled as an unredacted local source. Arbitrary
-  text can still contain an identifier or payload not recognized by heuristics;
-  representative generated artifacts and schema-backed metadata export remain
-  a release gate. No live host or user incident was used for these tests.
+- A 155-file clean copy passed 832 offline tests under UID 1000 with fresh
+  HOME/XDG state; one ACL-dependent test was skipped.
+- Real manifest, observation, plan, apply, execution and status writers,
+  plus the AFR inspector with stubbed xattr reads, generate synthetic fixtures.
+  Tests verify consistent host/path/action/ownership aliases while preserving
+  GFIDs, sizes, modes, roles, defined action outcomes and AFR counters.
+- Unknown keys, nested free text, messages, command previews, wrong types and
+  unsupported formats/versions are excluded. Explicit file-content fields,
+  binary/NUL input, symlinks, FIFOs, directories and oversized files are refused
+  before output creation. Private modes and missing/omitted inventory entries
+  are checked. No live host or user incident was used.
+- The exact inventory, 113 Python parses, 86 local Markdown links, external
+  private-identifier scan and whitespace checks pass. All 123 Python/shell
+  sources have license notices. The local installer produces 68 files identical
+  to their sources; six installed/source entry-point help commands pass.
+- Diagnostic export now has no raw-copy fallback. Coverage qualification for
+  additional collector formats remains open; unsupported inputs are explicitly
+  omitted. Human review is required before sharing. See
+  [supported formats and limits](SUPPORT_EVIDENCE.md).
 
-Exact staged-candidate audit checked 2026-09-20 on Linux with CPython 3.12.3:
+Earlier staged-candidate audit checked 2026-09-20 on Linux with CPython 3.12.3:
 
 - The 153-file inventory exactly matches the candidate tree, with no listed
   symlinks. All 111 Python sources parse and 84 local Markdown links resolve.

@@ -41,13 +41,18 @@
   tests plus canary capture regression). See [matching limits](../docs/HEAL_ROW_MATCHING.md).
 - [x] Implement R11 focused-route live split-brain guards, synthetic-seed
   accounting, and a local diagnostic bundle for optional reports to the tool
-  maintainers (2026-09-20; synthetic tests only). The bundle uses stable
-  server/IP aliases, explicit organization/person/path aliases, private output
-  modes and obvious file-content refusal. See [evidence limits](../docs/SUPPORT_EVIDENCE.md).
-- [ ] Before publication, validate diagnostic bundles against representative
-  generated artifacts and provide schema-backed metadata export where raw text
-  cannot be proven to exclude payloads or sensitive identifiers. Human review
-  remains required before a user shares a bundle.
+  maintainers (2026-09-20; synthetic tests only). The initial redaction approach
+  is superseded by the metadata exporter below. Private output modes and
+  explicit file-content refusal remain. See [evidence limits](../docs/SUPPORT_EVIDENCE.md).
+- [x] Replace diagnostic raw-text copying with versioned metadata projections
+  and test real manifest/observation/plan/apply/execution/status writers plus
+  AFR inspector output (2026-09-20; local synthetic tests). Names and paths
+  become aliases; unknown fields/formats are omitted. Human review remains
+  required. See [supported formats and limits](../docs/SUPPORT_EVIDENCE.md).
+- [ ] Qualify diagnostic format coverage against intended operator collection
+  workflows. Raw volume/status/health/log formats and worker wrappers are
+  currently omitted; add explicitly bounded schemas where those diagnostics
+  are needed. Do not reintroduce raw-copy fallback.
 - [x] Implement R12 evidence-build/repair-meta log forwarding on all five
   focused routes and record the path in status/report (2026-09-20; synthetic
   dispatch, real local log creation, and write-failure tests).

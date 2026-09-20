@@ -2,7 +2,7 @@
 
 After publication, users may choose to send a diagnostic case to the Gluster
 Repair Tool maintainers. The collection tool prepares a local bundle; it never
-sends one. The intended evidence is metadata such as object names, sizes,
+sends one. The intended evidence is metadata such as object-name aliases, sizes,
 GFIDs, brick roles, heal rows, AFR state, and command outcomes. Do not include
 server file contents, payload samples, credentials, or unrelated files.
 
@@ -45,35 +45,70 @@ path:/actual/private/root
 secret:actual-secret-value
 ```
 
-Typed values become stable aliases (`server1`, `organization1`, `path1`) across
-the bundle. `secret:` values and untyped legacy entries become `[REDACTED]`.
-Structured Gluster brick host fields and real IP addresses are also assigned
-stable `serverN` and `ipN` aliases automatically. List organization names,
-personal names, account names, sensitive path roots, and any hostnames that
-appear only in unstructured text; the tool cannot infer all of them. Keep the
-identifier file outside the repository and run from the source checkout:
+The exporter assigns stable `serverN`, `pathN`, `volumeN`, `actionN`, `stepN`,
+`uidN`, `gidN` and `afrN` aliases across one bundle. An IP used as a host becomes
+a server alias too. Entire paths and filenames are replaced, including names
+used as JSON keys. Identical strings in the same category share an alias;
+different spellings are not inferred to identify the same host or object.
+The private reverse mapping is never written into the bundle. Aliases are
+independent between bundles and do not preserve path hierarchy.
+
+The identifier file provides additional exclusions for retained string values,
+including GFIDs and AFR values. Typed prefixes are accepted for compatibility;
+they no longer select replacement names. Any matching retained string is omitted
+(case-insensitive substring match). Unknown free text is always omitted, even
+without a matching private identifier. Keep the identifier file outside the
+repository and run from the source checkout:
 
 ```bash
 python3 -m gluster_heal_tool.support_bundle PRIVATE_DESTINATION \
   --private-identifiers PRIVATE_IDENTIFIER_FILE \
   --artifact heal_info=EXISTING_HEAL_INFO_FILE \
-  --artifact afr_inspection=EXISTING_AFR_OUTPUT_FILE \
-  --artifact resolver_record=EXISTING_RESOLVER_RECORD_FILE
+  --artifact observations=EXISTING_OBSERVATIONS_JSON \
+  --artifact manifest=EXISTING_MANIFEST_JSON
 ```
 
-Missing paths appear only as `missing` in `inventory.json`. Present UTF-8
-metadata files are copied with aliases applied and SHA-256 hashes of the
-anonymized copies recorded. The builder refuses obvious file-content fields,
-unlisted credentials and URLs, symlinks, binary text, and oversized artifacts.
-Email addresses and user-home prefixes are removed. The output directory is
-private (`0700`) and its files are private (`0600`). It does not read server
-files referenced by artifacts, contact a host, or transmit anything.
+Each exported file is JSON with `diagnostic_schema_version: 1`, its artifact
+label, a `metadata` projection and an `omitted_fields_or_lines` count. The
+exporter uses explicit container and value schemas; it never copies a raw
+artifact after applying a text filter. These projections are diagnostic records,
+not valid repair inputs or evidence of current execution authority.
 
-The resulting `maintainer-handoff.txt` is a starting point. Inspect **every**
-copied file before sharing: arbitrary diagnostic text can still contain an
-organization, person, path or secret that no automatic check recognizes.
-Never pass a payload dump as an artifact. Keep the source, identifier list and
-bundle under the private operations area, outside the public repository.
+| Artifact label | Accepted saved format and retained metadata |
+| --- | --- |
+| `heal_info` | Gluster brick sections, connection state, entry counts, aliased paths, canonical GFIDs and split-brain flags |
+| `manifest` | Writer JSON with an `objects` map: identity, object type, observations, host roles and aliased origin topology |
+| `observations` | Writer JSON with an `observations` list: GFIDs, existence/type checks, sizes, modes and ownership aliases |
+| `plan` | Writer JSON with an `actions` list: defined action types, dependencies, source aliases, selected metadata and roles |
+| `apply`, `execute_results` | Apply/execution writer JSON with an `actions` list: defined outcomes, step types, return codes, estimates and aliased paths |
+| `status` | Status writer JSON: volume alias, write/unknown/interruption flags and selected action counts |
+| `afr_inspection` | Direct inspector-result JSON with `path` and `afr_xattrs`: aliased xattr names, exactly 12-byte AFR counter values |
+
+Messages, notes, command arguments, stdout/stderr, arbitrary xattrs, ACL text,
+timestamps, source fingerprints and unknown fields are omitted. Unknown enum
+values and values with unexpected types are omitted too. The omission count
+counts excluded fields/values or heal lines, not bytes or all descendants of
+an excluded container. Unsupported writer schema versions are not exported.
+
+`volume_info`, `volume_status`, `brick_roles`, `resolver_record`, `health`,
+`decisions`, `summary`, `assistants`, and unrecognized wrappers currently have
+no exporter. They appear as `omitted_unsupported_format`, with no raw copy.
+Missing files appear as `missing`. Exported files appear as `exported_metadata`
+with their JSON filename and SHA-256 hash of the exported bytes. Inspect the
+inventory before assuming that a selected artifact supplied evidence.
+
+The builder refuses explicit file-content fields, symlinks, nonregular files
+(including FIFOs), non-UTF-8/NUL input, and artifacts larger than 8 MiB before
+creating the output. It reads only the explicitly supplied saved artifact files.
+The output directory is private (`0700`) and its files are private (`0600`).
+It does not read server files referenced by artifacts, contact a host, or send
+anything. There is no raw-copy fallback.
+
+Inspect **every** exported file and `maintainer-handoff.txt` before sharing.
+GFIDs, sizes, modes, counters and relationships remain diagnostic information;
+pseudonymization is not a guarantee of anonymity or truthful input. Never pass
+a payload dump as an artifact. Keep the source, identifier list and bundle under
+the private operations area, outside the public repository.
 
 For a lab control, first identify whether a disposable independent volume or
 isolated host set can reproduce the identity and heal-row behavior. Document

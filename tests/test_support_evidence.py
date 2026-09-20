@@ -122,7 +122,8 @@ class SupportBundleTests(unittest.TestCase):
             private_ip = ".".join(("10", "20", "30", "40"))
             source.write_text(
                 f"Brick private-node:/bricks/volume\n"
-                f"file /data/item; size 42; GFID {GFID}; address {private_ip}; IPv6 fd00::10; "
+                f"<gfid:{GFID}> - Is in split-brain\n"
+                f"Status: Connected\nNumber of entries: 1\n"
                 f"organization Private Company; owner {private_contact}\n",
                 encoding="utf-8",
             )
@@ -130,7 +131,7 @@ class SupportBundleTests(unittest.TestCase):
             status.write_text(json.dumps({
                 "host": "private-node", "source_host": "second-node", "ip": private_ip,
                 "organization": "Private Company", "ipv6": "fd00::10",
-                "size": 42, "gfid": GFID,
+                "volume": "Private Company", "write_occurred": True,
             }), encoding="utf-8")
             result = prepare_support_bundle(
                 root / "bundle",
@@ -138,23 +139,19 @@ class SupportBundleTests(unittest.TestCase):
                  "afr_inspection": root / "missing-afr.txt"},
                 private_identifiers=["organization:Private Company"],
             )
-            copied = (root / "bundle" / "heal_info.txt").read_text(encoding="utf-8")
-            copied_status = (root / "bundle" / "status.txt").read_text(encoding="utf-8")
+            copied = (root / "bundle" / "heal_info.json").read_text(encoding="utf-8")
+            copied_status = (root / "bundle" / "status.json").read_text(encoding="utf-8")
             self.assertNotIn("private-node", copied)
             self.assertNotIn(private_contact, copied)
             self.assertNotIn("Private Company", copied + copied_status)
             self.assertNotIn(private_ip, copied + copied_status)
             self.assertNotIn("fd00::10", copied + copied_status)
             self.assertIn("server1", copied)
-            self.assertIn("server1", copied_status)
-            self.assertIn("server2", copied_status)
-            self.assertIn("ip1", copied + copied_status)
-            self.assertIn("ip2", copied + copied_status)
-            self.assertIn("organization1", copied + copied_status)
+            self.assertIn("volume1", copied_status)
             self.assertIn(GFID, copied)
-            self.assertIn("size 42", copied)
+            self.assertTrue(json.loads(copied_status)["metadata"]["write_occurred"])
             self.assertEqual("missing", result["inventory"]["afr_inspection"]["status"])
-            self.assertEqual("copied_redacted", result["inventory"]["heal_info"]["status"])
+            self.assertEqual("exported_metadata", result["inventory"]["heal_info"]["status"])
             self.assertIn("not sent", result["draft"])
             self.assertTrue((root / "bundle" / "maintainer-handoff.txt").is_file())
             self.assertEqual(0o700, stat.S_IMODE((root / "bundle").stat().st_mode))
@@ -162,15 +159,16 @@ class SupportBundleTests(unittest.TestCase):
                 self.assertEqual(0o600, stat.S_IMODE(path.stat().st_mode))
             self.assertNotIn("afr_inspection.txt", json.dumps(result["inventory"]))
 
-    def test_unlisted_private_identifier_refuses_bundle(self) -> None:
+    def test_unstructured_credentials_are_omitted_without_copying(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             source = root / "resolver.txt"
             source.write_text("authorization: Bearer private-secret\n", encoding="utf-8")
-            with self.assertRaisesRegex(ValueError, "unlisted private or sensitive value"):
-                prepare_support_bundle(root / "bundle", {"resolver_record": source},
-                                       private_identifiers=["known-private-token"])
-            self.assertFalse((root / "bundle").exists())
+            result = prepare_support_bundle(root / "bundle", {"resolver_record": source},
+                                            private_identifiers=["known-private-token"])
+            self.assertEqual("omitted_unsupported_format", result["inventory"]["resolver_record"]["status"])
+            self.assertFalse((root / "bundle" / "resolver_record.json").exists())
+            self.assertNotIn("private-secret", result["draft"])
 
     def test_refuses_file_payload_fields_before_writing_bundle(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
