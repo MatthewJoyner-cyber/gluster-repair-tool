@@ -1,0 +1,105 @@
+# Gluster Repair Tool
+
+GlusterFS evidence collection, repair planning, and guided recovery tooling.
+Version: `0.1.0` beta. License: [GPL-2.0-only](COPYING).
+
+**Pre-release: live qualification, fresh bootstrap and other review findings
+remain open.** Use this tree for development, offline analysis, and
+explicitly scoped disposable testing. See the [open review](steering/PRE_EXPORT_REVIEW.md)
+before considering repair writes.
+
+Start with [Gluster: recovery limits and this tool](docs/GLUSTER_GUIDE.md).
+The [implementation history](HISTORY.md) summarizes the private
+predecessor's design discoveries without importing its ledger. Future change
+details belong in Git commits.
+
+## What is implemented
+
+- Manager/worker discovery of logical objects from heal rows, paths, GFIDs,
+  GFID-child entries, or backend evidence.
+- Manifest, plan, apply-preview, decision cards, and bounded directory comparisons.
+- Guided repair, explicit execution, health/heal control, and verification.
+- Backup/restore and canary commands, with the limitations in the open review.
+
+These are implemented interfaces, not guarantees that every branch is qualified.
+The core has no dependency on Codex, installed agent skills, or private helpers.
+An optional agent companion is maintained in a separate tree.
+
+## Start from source
+
+Use Linux and Python 3.12 or newer for this candidate. The broader interpreter
+and distribution matrix remains unqualified. Source-checkout help and unit
+tests do not require a live Gluster cluster:
+
+```bash
+python3 gluster-manager.py --help
+python3 gluster-heal-tool.py --help
+python3 gluster-worker.py --help
+python3 -m unittest discover -s tests -v
+```
+
+Live operations additionally need the matching Gluster client/CLI, SSH and
+authorized remote workers. Individual operations use rsync, tar, attr/ACL
+utilities, mount tools, and constrained privilege on brick hosts. Inspect each
+operation's help and host requirements before deployment.
+
+The bootstrap scripts are present, but fresh installation and preflight
+side-effect guarantees are not yet qualified. Do not treat bootstrap
+`--preflight` as proven free of local writes. A previously installed package
+can mask the fresh-host defect.
+
+## Evidence and planning
+
+Use `python3 gluster-manager.py COMMAND --help` for arguments. The usual stages
+are `manifest-build` or `evidence-build`, then `plan-build`, then
+`apply-build` and review. `repair-meta` is an alias for focused evidence
+collection. `repair --preview` previews proposed repairs, but collection can
+contact hosts and mount lookups can trigger Gluster healing.
+
+A saved artifact is not perpetual permission to execute it. New apply files
+carry [volume/evidence binding](docs/EXECUTION_BINDING.md); legacy unbound files
+must be rebuilt before execution. All public `apply-run` forms now share the
+same execution gates and heal-restoration lifecycle. [Dependency checks](docs/EXECUTION_DEPENDENCIES.md)
+block actions unless their prerequisites completed in the current run.
+[Native resolver outcome checks](docs/EXECUTION_OUTCOMES.md) stop unknown results
+before fallback; operational errors cannot count as harmless missing targets.
+[Durable attempt records](docs/EXECUTION_JOURNAL.md) preserve command intent and
+results through ordinary exceptions and process loss. Live qualification and
+the other open findings still block unattended release use.
+
+## Local storage
+
+Controller work defaults to `$XDG_STATE_HOME/gluster-repair/work`, or
+`$HOME/.local/state/gluster-repair/work` when XDG_STATE_HOME is unset or relative.
+Set `GLUSTER_REPAIR_WORK_ROOT` explicitly to retain an existing work location.
+
+Backup discovery defaults to the sibling `gluster-repair/backups` directory.
+Override it with `GLUSTER_REPAIR_BACKUP_DIR` or `backup-restore --backup-dir`.
+An explicit `--archive` or existing status-recorded archive takes precedence.
+No old state, mount, or archive is moved automatically. Changing defaults does
+not migrate or verify old archives. New [verified backup archives](docs/BACKUP_FIDELITY.md)
+preserve selected metadata and hardlinks and require verification before cleanup.
+Legacy archives cannot establish fidelity for automatic deletion of recovery copies.
+
+Personal instructions and operational ledgers belong outside both public
+repositories. See [the private/public boundary](docs/PRIVACY.md).
+
+## Development and release
+
+- [Current TODO](steering/TODO.md): unresolved implementation and release work.
+- [Implementation history](HISTORY.md): frozen prehistory and discoveries.
+- [Validation](docs/VALIDATION.md): checks for this migration candidate.
+- [Migration guide](MIGRATION.md): two independent repositories and private state.
+- [Safety invariants](steering/SAFETY_INVARIANTS.md): required repair contracts.
+- [Architecture](docs/ARCHITECTURE.md): module ownership and tool boundaries.
+- [Test plan](steering/TEST_PLAN.md): synthetic and live proof requirements.
+
+The legacy canary CLI has built-in sample volume names. Always pass the
+intended disposable `--volume` explicitly; no name proves a volume is safe.
+The sample observations are wholly synthetic.
+
+The private predecessor is a reference archive. Local development checkpoints
+start from this sanitized source tree; no original Git database, tags, remotes
+or author metadata are imported. Publication and a completed-review tag wait
+for the release gates. Do not copy the
+private archive, personal configuration, runtime artifacts, or ledgers.
