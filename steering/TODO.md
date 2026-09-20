@@ -50,9 +50,10 @@
   become aliases; unknown fields/formats are omitted. Human review remains
   required. See [supported formats and limits](../docs/SUPPORT_EVIDENCE.md).
 - [ ] Qualify diagnostic format coverage against intended operator collection
-  workflows. Raw volume/status/health/log formats and worker wrappers are
-  currently omitted; add explicitly bounded schemas where those diagnostics
-  are needed. Do not reintroduce raw-copy fallback.
+  workflows. Parsed volume-info/status and version-1 health reports export
+  selected topology and readiness fields; log, worker-wrapper and remaining
+  unstructured artifacts are omitted. Add only explicitly bounded schemas;
+  do not reintroduce raw-copy fallback.
 - [x] Implement R12 evidence-build/repair-meta log forwarding on all five
   focused routes and record the path in status/report (2026-09-20; synthetic
   dispatch, real local log creation, and write-failure tests).

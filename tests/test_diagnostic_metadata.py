@@ -11,6 +11,7 @@ from unittest.mock import patch
 
 from gluster_heal_tool.apply_reporting import write_apply_results
 from gluster_heal_tool.diagnostic_metadata import MetadataExporter
+from gluster_heal_tool.health import write_health_report
 from gluster_heal_tool.manifest import write_manifest
 from gluster_heal_tool.models import ApplyActionResult, ApplyStep, ManifestObject, PlanAction, ResolutionObservation
 from gluster_heal_tool.planner_report import write_plan
@@ -159,6 +160,74 @@ class DiagnosticMetadataTests(unittest.TestCase):
         self.assertTrue(brick["entries"][0]["split_brain"])
         self.assertEqual(GFID, brick["entries"][1]["gfid"])
         self.assertEqual(1, heal["omitted_fields_or_lines"])
+
+    def test_topology_and_health_export_keep_only_parsed_operational_facts(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            private_host = "private-node"
+            private_path = "/private-company/brick"
+            private_ip = ".".join(("10", "0", "0", "1"))
+            volume_info = root / "volume-info.txt"
+            volume_info.write_text(
+                "Volume Name: Private Company volume\nType: Replicate\nStatus: Started\n"
+                "Volume ID: private-id\nBricks:\n"
+                f"Brick1: {private_host}:{private_path}\n"
+                f"Brick2: arbiter-node:{private_path} (arbiter)\n",
+                encoding="utf-8",
+            )
+            volume_status = root / "volume-status.txt"
+            volume_status.write_text(
+                "Status of volume: Private Company volume\n"
+                f"Brick {private_host}:{private_path} 49152 N/A Y 100\n"
+                f"Brick arbiter-node:{private_path} 49153 N/A N N/A\n"
+                "Self-heal Daemon on private-node N/A N/A Y 101\n"
+                "unparsed Private Company log detail\n",
+                encoding="utf-8",
+            )
+            health = root / "health.json"
+            write_health_report(health, {
+                "schema_version": 1, "volume": "Private Company volume", "available": True,
+                "volume_type": "Replicate", "hosts": [private_host, "arbiter-node"],
+                "host_facts": [{"host": private_host, "short_hostname": private_host,
+                                "fqdn": "private-node.example", "ips": [private_ip],
+                                "aliases": [private_host, "private-node.example"]}],
+                "bricks": [{"host": private_host, "path": private_path, "online": True,
+                            "pid_running": True, "aliases": [private_host]}],
+                "self_heal_daemons": [{"host": private_host, "online": True,
+                                       "pid_running": True, "source": "text"}],
+                "checks": [{"kind": "brick_free_space", "ok": True, "host": private_host,
+                            "path": private_path, "available_bytes": 42,
+                            "message": PRIVATE, "stdout": PRIVATE}],
+                "heal_settings": {"effective_settings": {"cluster.self-heal-daemon": "on"},
+                                  "all_on": True, "all_off": False, "warnings": [PRIVATE]},
+                "reversibility": {"snapshot_required": True, "snapshot_acknowledged": False,
+                                  "snapshot_inventory": {"available": True, "count": 1,
+                                                         "names": [PRIVATE], "raw": PRIVATE}},
+                "summary": {"checks_checked": 1, "checks_ok": 1, "checks_failed": 0,
+                            "hosts_checked": 2, "hosts_ok": 2, "hosts_failed": 0,
+                            "bricks_checked": 2, "bricks_online": 1, "bricks_offline": 1,
+                            "ready": False, "warnings": [PRIVATE]},
+            })
+            result = prepare_support_bundle(root / "bundle", {
+                "volume_info": volume_info, "volume_status": volume_status, "health": health,
+            }, private_identifiers=["organization:Private Company"])
+            exported = {name: json.loads((root / "bundle" / f"{name}.json").read_text())
+                        for name in ("volume_info", "volume_status", "health")}
+            serialized = json.dumps(exported)
+            for private in (PRIVATE, private_host, "arbiter-node", private_path, private_ip,
+                            "private-id", "message", "stdout", "warnings", "names", "raw"):
+                self.assertNotIn(private, serialized)
+            topology = exported["volume_info"]["metadata"]
+            status = exported["volume_status"]["metadata"]
+            report = exported["health"]["metadata"]
+            self.assertEqual("Replicate", topology["volume_type"])
+            self.assertEqual("Started", topology["state"])
+            self.assertEqual(topology["bricks"][0]["host"], status["bricks"][0]["host"])
+            self.assertEqual(topology["bricks"][0]["path"], status["bricks"][0]["path"])
+            self.assertEqual(topology["bricks"][0]["host"], report["bricks"][0]["host"])
+            self.assertTrue(report["checks"][0]["ok"])
+            self.assertEqual(42, report["checks"][0]["available_bytes"])
+            self.assertTrue(all(item["status"] == "exported_metadata" for item in result["inventory"].values()))
 
     def test_refuses_nonregular_and_oversized_inputs_before_output(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

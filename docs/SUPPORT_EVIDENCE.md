@@ -77,6 +77,9 @@ not valid repair inputs or evidence of current execution authority.
 | Artifact label | Accepted saved format and retained metadata |
 | --- | --- |
 | `heal_info` | Gluster brick sections, connection state, entry counts, aliased paths, canonical GFIDs and split-brain flags |
+| `volume_info` | Recognized Gluster volume name/type/state and parsed brick roles with aliased host/path topology |
+| `volume_status` | Parsed Gluster brick and self-heal-daemon online/PID state with aliased hosts and paths |
+| `health` | Version-1 health report: topology aliases, selected check outcomes, free space/inode counts, heal-option states, snapshot flags and summary counts |
 | `manifest` | Writer JSON with an `objects` map: identity, object type, observations, host roles and aliased origin topology |
 | `observations` | Writer JSON with an `observations` list: GFIDs, existence/type checks, sizes, modes and ownership aliases |
 | `plan` | Writer JSON with an `actions` list: defined action types, dependencies, source aliases, selected metadata and roles |
@@ -84,14 +87,15 @@ not valid repair inputs or evidence of current execution authority.
 | `status` | Status writer JSON: volume alias, write/unknown/interruption flags and selected action counts |
 | `afr_inspection` | Direct inspector-result JSON with `path` and `afr_xattrs`: aliased xattr names, exactly 12-byte AFR counter values |
 
-Messages, notes, command arguments, stdout/stderr, arbitrary xattrs, ACL text,
+Messages, notes, command arguments, stdout/stderr, health log matches, snapshot
+names, arbitrary xattrs, ACL text,
 timestamps, source fingerprints and unknown fields are omitted. Unknown enum
 values and values with unexpected types are omitted too. The omission count
 counts excluded fields/values or heal lines, not bytes or all descendants of
 an excluded container. Unsupported writer schema versions are not exported.
 
-`volume_info`, `volume_status`, `brick_roles`, `resolver_record`, `health`,
-`decisions`, `summary`, `assistants`, and unrecognized wrappers currently have
+`brick_roles`, `resolver_record`, `decisions`, `summary`, `assistants`, and
+unrecognized wrappers currently have
 no exporter. They appear as `omitted_unsupported_format`, with no raw copy.
 Missing files appear as `missing`. Exported files appear as `exported_metadata`
 with their JSON filename and SHA-256 hash of the exported bytes. Inspect the

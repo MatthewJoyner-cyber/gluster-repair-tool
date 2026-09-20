@@ -15,6 +15,9 @@ GFID = re.compile(r"[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}")
 TYPES = frozenset({"", "unknown", "file", "directory", "symlink", "missing",
                    "dead_gfid", "stale_glusterfs_index", "other"})
 ROLES = frozenset({"data", "arbiter", "unknown", ""})
+VOLUME_TYPES = frozenset({"Replicate", "Distributed-Replicate", "Disperse",
+                          "Distributed-Disperse", "Distributed", ""})
+VOLUME_STATES = frozenset({"Started", "Stopped", ""})
 STATES = frozenset({"", "unknown", "planned", "proposed", "review", "skipped",
                     "blocked", "running", "completed", "executed", "failed",
                     "interrupted", "pending", "not-started", "ready"})
@@ -63,6 +66,49 @@ ROLE_MAP = ("map", HOST, ROLES)
 HOST_ALIASES = ("map", HOST, ("list", HOST))
 BRICK = {"host": HOST, "path": PATH, "role": ROLES}
 BINDING = {"origin": {"volume": ("alias", "volume"), "bricks": ("list", BRICK)}}
+HEALTH_CHECK_KINDS = frozenset({
+    "volume_type", "heal_settings", "snapshot_inventory", "volume_status",
+    "ssh_reachable", "host_identity", "worker_available", "host_ops_available",
+    "log_ops_available", "brick_mount", "brick_free_space", "brick_free_inodes",
+    "glusterd", "heal_activity", "heal_lock_skip_probe", "self_heal_daemon_status",
+})
+HEALTH_CHECK = {
+    "kind": HEALTH_CHECK_KINDS, "ok": "boolean", "host": HOST, "path": PATH,
+    "online": "boolean", "pid_running": "boolean", "available": "boolean",
+    "busy": "boolean", "inspected_glusterfsd": "boolean", "returncode": "integer",
+    "count": "integer", "match_count": "integer", "available_bytes": "integer",
+    "available_inodes": "integer",
+}
+HEALTH_BRICK = {"host": HOST, "path": PATH, "online": "boolean",
+                "pid_running": "boolean", "aliases": ("list", HOST)}
+HOST_FACT = {"host": HOST, "short_hostname": HOST, "fqdn": HOST,
+             "ips": ("list", HOST), "aliases": ("list", HOST)}
+SHD = {"host": HOST, "online": "boolean", "pid_running": "boolean",
+       "source": frozenset({"text", "xml"})}
+HEAL_SETTINGS = {
+    "effective_settings": {
+        "cluster.self-heal-daemon": frozenset({"on", "off", "(default)"}),
+        "cluster.data-self-heal": frozenset({"on", "off", "(default)"}),
+        "cluster.metadata-self-heal": frozenset({"on", "off", "(default)"}),
+        "cluster.entry-self-heal": frozenset({"on", "off", "(default)"}),
+    },
+    "all_on": "boolean", "all_off": "boolean",
+}
+HEALTH = {
+    "volume": ("alias", "volume"), "available": "boolean",
+    "volume_type": VOLUME_TYPES, "hosts": ("list", HOST),
+    "host_facts": ("list", HOST_FACT), "bricks": ("list", HEALTH_BRICK),
+    "self_heal_daemons": ("list", SHD), "checks": ("list", HEALTH_CHECK),
+    "heal_settings": HEAL_SETTINGS,
+    "reversibility": {"snapshot_required": "boolean", "snapshot_acknowledged": "boolean",
+                        "snapshot_inventory": {"available": "boolean", "count": "integer"}},
+    "summary": {key: rule for key, rule in {
+        "checks_checked": "integer", "checks_ok": "integer", "checks_failed": "integer",
+        "hosts_checked": "integer", "hosts_ok": "integer", "hosts_failed": "integer",
+        "bricks_checked": "integer", "bricks_online": "integer",
+        "bricks_offline": "integer", "ready": "boolean",
+    }.items()},
+}
 
 OBSERVATION = {
     "host": HOST, "raw_entry": PATH, "gfid": "gfid", "file_gfid": "gfid",
@@ -139,12 +185,15 @@ SCHEMAS = {
     "apply": {"actions": ("list", RESULT), "origin_binding": BINDING},
     "execute_results": {"actions": ("list", RESULT), "origin_binding": BINDING},
     "status": STATUS,
+    "health": HEALTH,
     "afr_inspection": {"path": PATH, "afr_xattrs": ("list", {
         "name": ("alias", "afr"), "value_hex": "afr", "value_bytes": "afr_size",
     })},
 }
-REQUIRED = {"manifest": "objects", "observations": "observations", "plan": "actions",
-            "apply": "actions", "execute_results": "actions", "afr_inspection": "afr_xattrs"}
+REQUIRED = {"manifest": ("objects", dict), "observations": ("observations", list),
+            "plan": ("actions", list), "apply": ("actions", list),
+            "execute_results": ("actions", list), "health": ("summary", dict),
+            "afr_inspection": ("afr_xattrs", list)}
 OMIT = object()
 
 
@@ -255,11 +304,62 @@ class MetadataExporter:
             self.omitted += 1
         return {"bricks": bricks}
 
+    def volume_info(self, content: str) -> dict | None:
+        volume = ""
+        volume_type = ""
+        state = ""
+        bricks = []
+        for raw_line in content.splitlines():
+            line = raw_line.strip()
+            if line.startswith("Volume Name:"):
+                volume = line.partition(":")[2].strip()
+            elif line.startswith("Type:"):
+                volume_type = line.partition(":")[2].strip()
+            elif line.startswith("Status:"):
+                state = line.partition(":")[2].strip()
+            elif match := re.fullmatch(r"Brick\d+:\s*(.+?):(/.*?)(?: \(arbiter\))?", line):
+                bricks.append({"host": self.alias("server", match[1]),
+                               "path": self.alias("path", match[2]),
+                               "role": "arbiter" if line.endswith(" (arbiter)") else "data"})
+            elif line:
+                self.omitted += 1
+        if not volume or not bricks or volume_type not in VOLUME_TYPES or state not in VOLUME_STATES:
+            return None
+        return {"volume": self.alias("volume", volume), "volume_type": volume_type,
+                "state": state, "bricks": bricks}
+
+    def volume_status(self, content: str) -> dict | None:
+        # Reuse the health parser so wrapped, real Gluster status rows have one
+        # definition. Only the parsed metadata is retained.
+        from .health import _parse_self_heal_daemon_status, _parse_volume_status
+        bricks = _parse_volume_status(content)
+        daemons = _parse_self_heal_daemon_status(content)
+        if not bricks and not daemons:
+            return None
+        return {
+            "bricks": [{"host": self.alias("server", row["host"]),
+                        "path": self.alias("path", row["path"]),
+                        "online": bool(row["online"]), "pid_running": bool(row["pid_running"])}
+                       for row in bricks],
+            "self_heal_daemons": [{"host": self.alias("server", row["host"]),
+                                   "online": bool(row["online"]),
+                                   "pid_running": bool(row["pid_running"]),
+                                   "source": "text"} for row in daemons],
+        }
+
     def export(self, name: str, content: str) -> dict | None:
         self.omitted = 0
         if name == "heal_info":
             metadata = self.heal(content)
             if not metadata["bricks"]:
+                return None
+        elif name == "volume_info":
+            metadata = self.volume_info(content)
+            if metadata is None:
+                return None
+        elif name == "volume_status":
+            metadata = self.volume_status(content)
+            if metadata is None:
                 return None
         elif name in SCHEMAS:
             try:
@@ -269,7 +369,7 @@ class MetadataExporter:
             if not isinstance(raw, dict):
                 return None
             required = REQUIRED.get(name)
-            if required and not isinstance(raw.get(required), dict if name == "manifest" else list):
+            if required and not isinstance(raw.get(required[0]), required[1]):
                 return None
             # Future writer versions require a deliberate schema review.
             if "schema_version" in raw and (type(raw["schema_version"]) is not int or raw["schema_version"] != 1):

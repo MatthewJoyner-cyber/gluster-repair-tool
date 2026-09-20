@@ -3,12 +3,15 @@
 Schema-backed maintainer diagnostic export checked 2026-09-20 on Linux with
 CPython 3.12.3:
 
-- A 155-file clean copy passed 832 offline tests under UID 1000 with fresh
+- A 155-file clean copy passed 833 offline tests under UID 1000 with fresh
   HOME/XDG state; one ACL-dependent test was skipped.
 - Real manifest, observation, plan, apply, execution and status writers,
   plus the AFR inspector with stubbed xattr reads, generate synthetic fixtures.
   Tests verify consistent host/path/action/ownership aliases while preserving
   GFIDs, sizes, modes, roles, defined action outcomes and AFR counters.
+- Parsed Gluster volume-info/status and the version-1 health-report writer also
+  preserve aliased brick topology, online/PID state, selected readiness counts,
+  free-space facts and snapshot flags while omitting messages and raw output.
 - Unknown keys, nested free text, messages, command previews, wrong types and
   unsupported formats/versions are excluded. Explicit file-content fields,
   binary/NUL input, symlinks, FIFOs, directories and oversized files are refused
