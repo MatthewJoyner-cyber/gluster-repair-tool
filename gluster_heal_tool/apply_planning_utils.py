@@ -144,8 +144,7 @@ def _mount_mkdir_preview(path: str) -> list[str]:
 
 
 def _ssh_mkdir_preview(host: str, path: str) -> list[str]:
-    # gluster-host-ops.sh owns the mkdir -p behavior and accepts one path.
-    return ssh_remote_command(host, ["mkdir", path])
+    return ssh_remote_command(host, ["mkdir", "-p", "--", path])
 
 
 def _ssh_setfattr_preview(host: str, path: str, gfid: str) -> list[str]:
@@ -218,7 +217,8 @@ def _ssh_acl_reference_preview(
             )
         )
         pipeline = f"{clear_cmd} && {pipeline}"
-    return ["bash", "-lc", pipeline]
+    # A successful target command must not hide a failed source ACL read.
+    return ["bash", "-o", "pipefail", "-c", pipeline]
 
 
 def _ssh_set_mdata_preview(host: str, path: str, mdata_hex: str) -> list[str]:

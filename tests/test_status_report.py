@@ -24,6 +24,10 @@ def _load_manager_main():
 
 
 class StatusReportTests(unittest.TestCase):
+    def test_render_status_report_shows_saved_evidence_log(self) -> None:
+        report = render_status_report({"phase": "evidence-build-built", "evidence_log": "/tmp/evidence.log"})
+        self.assertIn("evidence log: /tmp/evidence.log", report)
+
     def test_render_status_report_includes_graph_checkpoint(self) -> None:
         report = render_status_report(
             {

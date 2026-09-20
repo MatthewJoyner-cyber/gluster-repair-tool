@@ -25,6 +25,8 @@ def render_status_report(status: dict[str, Any]) -> str:
                 ]
             )
         )
+    if status.get("evidence_log"):
+        parts.append(f"evidence log: {status['evidence_log']}")
     reversibility = render_reversibility_summary(status)
     if reversibility:
         parts.append(f"reversibility: {reversibility}")

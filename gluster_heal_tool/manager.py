@@ -62,20 +62,32 @@ def _live_split_brain_gfids(volume: str) -> tuple[set[str], str]:
         entries = parse_heal_info_text(get_heal_info_text(volume))
     except RuntimeError as exc:
         return set(), str(exc)
-    return {
+    gfids = {
         entry.parent_gfid
         for entry in entries
         if entry.split_brain and entry.parent_gfid
-    }, ""
+    }
+    if any(entry.split_brain and not entry.parent_gfid for entry in entries):
+        return gfids, "split-brain heal row lacks a GFID identity"
+    return gfids, ""
 
 
-def _annotate_live_split_brain(manifest, split_brain_gfids: set[str]) -> None:
-    if not split_brain_gfids:
-        return
+def _annotate_live_split_brain(manifest, split_brain_gfids: set[str], error: str = "") -> None:
     for obj in manifest.values():
-        object_gfids = set(obj.gfids) | set(obj.file_gfids)
-        if object_gfids & split_brain_gfids and "heal_info_marks_split_brain" not in obj.notes:
+        # An index-entry seed names its GFID in the final path component.
+        index_gfids = {
+            Path(raw).name for raw in obj.raw_entries
+            if "/.glusterfs/indices/" in raw
+        }
+        object_gfids = {value.lower() for value in (
+            set(obj.gfids) | set(obj.file_gfids) | set(obj.dead_gfids) | index_gfids
+        )}
+        if object_gfids & {value.lower() for value in split_brain_gfids} and "heal_info_marks_split_brain" not in obj.notes:
             obj.notes.append("heal_info_marks_split_brain")
+        if error:
+            obj.notes.append("live_split_brain_evidence_unavailable")
+        elif "live_split_brain_checked" not in obj.notes:
+            obj.notes.append("live_split_brain_checked")
 
 
 
@@ -359,6 +371,7 @@ def _resolve_via_operator_entry(
         brick_paths = {}
     unique_paths = {value for value in brick_paths.values()}
     brick_path = next(iter(unique_paths)) if len(unique_paths) == 1 else ''
+    split_brain_gfids, split_brain_evidence_error = _live_split_brain_gfids(volume)
     summary = _resolve_entries_via_workers(
         heal_entries=heal_entries,
         volume=volume,
@@ -377,6 +390,8 @@ def _resolve_via_operator_entry(
         brick_role_evidence_required=True,
         brick_host_aliases=brick_host_aliases,
         probe_mount=probe_mount,
+        split_brain_gfids=split_brain_gfids,
+        split_brain_evidence_error=split_brain_evidence_error,
     )
     summary.update(
         {
@@ -393,6 +408,8 @@ def _resolve_via_operator_entry(
             'requested_seed': entry,
             'repair_meta_input': entry,
             'repair_meta_input_kind': input_kind,
+            'live_split_brain_gfid_count': len(split_brain_gfids),
+            'live_split_brain_evidence_error': split_brain_evidence_error,
         }
     )
     return summary
@@ -514,6 +531,7 @@ def _resolve_entries_via_workers(
     brick_role_evidence_required: bool = False,
     brick_role_evidence_error: str = "",
     split_brain_gfids: set[str] | None = None,
+    split_brain_evidence_error: str = "",
 ) -> dict[str, object]:
     if brick_role_evidence_required and brick_roles_by_host is None:
         brick_roles_by_host, brick_role_evidence_error = _load_brick_role_evidence(volume)
@@ -588,7 +606,8 @@ def _resolve_entries_via_workers(
         brick_role_evidence_required=brick_role_evidence_required,
         brick_role_evidence_error=brick_role_evidence_error,
     )
-    _annotate_live_split_brain(manifest, split_brain_gfids or set())
+    if split_brain_gfids is not None or split_brain_evidence_error:
+        _annotate_live_split_brain(manifest, split_brain_gfids or set(), split_brain_evidence_error)
     write_manifest(
         manifest_out, manifest, volume=volume,
         bricks=[{"host": host, "path": request.brick_path,
@@ -788,6 +807,7 @@ def resolve_via_path(
         brick_host_aliases=brick_host_aliases,
         probe_mount=probe_mount,
         split_brain_gfids=split_brain_gfids,
+        split_brain_evidence_error=split_brain_evidence_error,
     )
     summary.update(
         {
@@ -845,6 +865,7 @@ def resolve_via_backend_path(
     brick_paths = discover_brick_paths(volume)
     unique_paths = {value for value in brick_paths.values()}
     brick_path = next(iter(unique_paths)) if len(unique_paths) == 1 else ""
+    split_brain_gfids, split_brain_evidence_error = _live_split_brain_gfids(volume)
     summary = _resolve_entries_via_workers(
         heal_entries=heal_entries,
         volume=volume,
@@ -863,6 +884,8 @@ def resolve_via_backend_path(
         brick_role_evidence_required=True,
         brick_host_aliases=brick_host_aliases,
         probe_mount=False,
+        split_brain_gfids=split_brain_gfids,
+        split_brain_evidence_error=split_brain_evidence_error,
     )
     summary.update(
         {
@@ -878,6 +901,8 @@ def resolve_via_backend_path(
             "mount_probe": False,
             "input_source": "operator_path",
             "requested_seed": context["requested_backend_path"],
+            "live_split_brain_gfid_count": len(split_brain_gfids),
+            "live_split_brain_evidence_error": split_brain_evidence_error,
         }
     )
     return summary

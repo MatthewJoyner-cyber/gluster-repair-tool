@@ -8,9 +8,12 @@ import subprocess
 import time
 import uuid
 from pathlib import Path
+from pathlib import PurePosixPath
 from typing import Any
+from uuid import UUID
 
 from . import canary_shared as canary_api
+from .canary_eligibility import POSIX_STATE_VERSION, validate_posix_source_choice_state
 from .controller_paths import default_canary_stage_local_path
 from .controller_paths import default_temp_mount_root
 from .evidence_provenance import canary_state_plan_provenance
@@ -100,17 +103,34 @@ def _run_local_text(command: list[str]) -> str:
     return (proc.stdout or "").strip()
 
 
-def _heal_info_contains_path(heal_text: str, logical_path: str) -> bool:
-    if not heal_text or not logical_path:
+def _heal_info_contains_path(
+    heal_text: str,
+    mount_file: str,
+    *,
+    mount_root: str,
+    gfid: str = "",
+) -> bool:
+    """Match a parsed Gluster row to one recorded volume-relative identity."""
+    if not heal_text or not mount_file or not mount_root:
         return False
-    if logical_path in heal_text:
-        return True
-    normalized_path = logical_path.rstrip("/")
+    if (not mount_file.startswith("/") or not mount_root.startswith("/")
+            or any(part in (".", "..") for part in mount_file.split("/"))
+            or any(part in (".", "..") for part in mount_root.split("/"))):
+        return False
+    try:
+        relative_path = PurePosixPath(mount_file).relative_to(PurePosixPath(mount_root))
+    except ValueError:
+        return False
+    if str(relative_path) == ".":
+        return False
+    identities = {"/" + str(relative_path)}
+    try:
+        if gfid and str(UUID(gfid)) == gfid.lower():
+            identities.add(f"<gfid:{gfid.lower()}>")
+    except (ValueError, TypeError, AttributeError):
+        pass
     for entry in parse_heal_info_text(heal_text):
-        entry_path = entry.raw.strip()
-        if entry_path == normalized_path:
-            return True
-        if entry_path.startswith("/") and normalized_path.endswith(entry_path):
+        if entry.raw in identities:
             return True
     return False
 
@@ -1492,9 +1512,11 @@ def create_file_metadata_split_brain_canary(
         heal_info_split_brain_before = _run_local_text(
             ["sudo", "-n", "gluster", "volume", "heal", volume, "info", "split-brain"]
         )
-        if _heal_info_contains_path(heal_info_before, mount_file) or _heal_info_contains_path(
+        if _heal_info_contains_path(heal_info_before, mount_file, mount_root=mount_root, gfid=canonical_gfid) or _heal_info_contains_path(
             heal_info_split_brain_before,
             mount_file,
+            mount_root=mount_root,
+            gfid=canonical_gfid,
         ):
             break
         if time.monotonic() >= heal_visibility_deadline:
@@ -1530,23 +1552,29 @@ def create_file_metadata_split_brain_canary(
         heal_info_split_brain_after = _run_local_text(
             ["sudo", "-n", "gluster", "volume", "heal", volume, "info", "split-brain"]
         )
-        if _heal_info_contains_path(heal_info_after, mount_file) or _heal_info_contains_path(
+        if _heal_info_contains_path(heal_info_after, mount_file, mount_root=mount_root, gfid=canonical_gfid) or _heal_info_contains_path(
             heal_info_split_brain_after,
             mount_file,
+            mount_root=mount_root,
+            gfid=canonical_gfid,
         ):
             break
         if time.monotonic() >= heal_visibility_deadline:
             break
         time.sleep(1)
-    heal_info_contains_mount_file_before = _heal_info_contains_path(heal_info_before, mount_file)
-    heal_info_contains_mount_file_after = _heal_info_contains_path(heal_info_after, mount_file)
+    heal_info_contains_mount_file_before = _heal_info_contains_path(heal_info_before, mount_file, mount_root=mount_root, gfid=canonical_gfid)
+    heal_info_contains_mount_file_after = _heal_info_contains_path(heal_info_after, mount_file, mount_root=mount_root, gfid=canonical_gfid)
     heal_info_split_brain_contains_mount_file_before = _heal_info_contains_path(
         heal_info_split_brain_before,
         mount_file,
+        mount_root=mount_root,
+        gfid=canonical_gfid,
     )
     heal_info_split_brain_contains_mount_file_after = _heal_info_contains_path(
         heal_info_split_brain_after,
         mount_file,
+        mount_root=mount_root,
+        gfid=canonical_gfid,
     )
     durable_split_brain = bool(
         (
@@ -1913,6 +1941,7 @@ def create_file_posix_metadata_split_brain_canary(
         scenario,
         {
             "kind": "file-posix-metadata-split-brain",
+            "schema_version": POSIX_STATE_VERSION,
             "volume": volume,
             "scenario": scenario,
             "partial": True,
@@ -1929,6 +1958,9 @@ def create_file_posix_metadata_split_brain_canary(
         },
     )
     _require_posix_canary_readiness(volume, ssh_user=ssh_user)
+    brick_roles_by_host = canary_api._brick_roles_by_host(volume)
+    if set(brick_roles_by_host) != set(brick_hosts) or brick_roles_by_host.get(source_host) != "data":
+        raise RuntimeError("file POSIX source-choice canary needs complete brick roles and a data-brick source")
     _ensure_canary_mount(volume, mount_root, acl_mount=True)
     acl_mount_available = _mountpoint_supports_acl(mount_root)
     _run_local(["sudo", "-n", "gluster", "volume", "heal", volume, "disable"])
@@ -2160,15 +2192,19 @@ def create_file_posix_metadata_split_brain_canary(
         _trigger_canary_heal(volume, scenario)
         heal_info_after = _run_local_text(["sudo", "-n", "gluster", "volume", "heal", volume, "info"])
         heal_info_split_brain_after = _run_local_text(["sudo", "-n", "gluster", "volume", "heal", volume, "info", "split-brain"])
-    heal_info_contains_mount_file_before = _heal_info_contains_path(heal_info_before, mount_file)
-    heal_info_contains_mount_file_after = _heal_info_contains_path(heal_info_after, mount_file)
+    heal_info_contains_mount_file_before = _heal_info_contains_path(heal_info_before, mount_file, mount_root=mount_root, gfid=canonical_gfid)
+    heal_info_contains_mount_file_after = _heal_info_contains_path(heal_info_after, mount_file, mount_root=mount_root, gfid=canonical_gfid)
     heal_info_split_brain_contains_mount_file_before = _heal_info_contains_path(
         heal_info_split_brain_before,
         mount_file,
+        mount_root=mount_root,
+        gfid=canonical_gfid,
     )
     heal_info_split_brain_contains_mount_file_after = _heal_info_contains_path(
         heal_info_split_brain_after,
         mount_file,
+        mount_root=mount_root,
+        gfid=canonical_gfid,
     )
     stable_split_brain = bool(
         heal_info_split_brain_contains_mount_file_before and heal_info_split_brain_contains_mount_file_after
@@ -2188,12 +2224,14 @@ def create_file_posix_metadata_split_brain_canary(
     )
     state_payload = {
         "kind": "file-posix-metadata-split-brain",
+        "schema_version": POSIX_STATE_VERSION,
+        "brick_roles_by_host": brick_roles_by_host,
         "volume": volume,
         "scenario": scenario,
         "construction_class": "afr-synthesized",
         "proof_label": proof_label,
         "fixture_scope": fixture_scope,
-        "source_choice_eligible": stable_split_brain and not direct_x4_fixture,
+        "source_choice_eligible": stable_split_brain and not direct_x4_fixture and not leave_heal_pending,
         "leave_heal_pending": leave_heal_pending,
         "heal_crawl_triggered": not leave_heal_pending,
         "restore_heal_settings": True,
@@ -2318,29 +2356,9 @@ def build_file_posix_metadata_split_brain_plan_from_canary_state(
     scenario: str,
 ) -> dict[str, Any]:
     state = _read_state(volume, scenario)
-    kind = str(state.get("kind") or "")
-    if kind != "file-posix-metadata-split-brain":
-        raise RuntimeError(f"scenario {scenario!r} is not a file POSIX metadata split-brain canary")
-    if str(state.get("fixture_scope") or "") == "x4-direct-bookkeeping-diagnostic":
-        raise RuntimeError(
-            f"scenario {scenario!r} uses the direct replica-4 bookkeeping fixture; "
-            "it is diagnostic-only and cannot enter source selection"
-        )
-    if not bool(state.get("gluster_visible_metadata_split_brain")):
-        raise RuntimeError(
-            f"scenario {scenario!r} did not retain a stable Gluster-visible split-brain row; rerun the canary or reclassify the case as diagnostic"
-        )
-
-    mount_root = str(state.get("mount_root") or _volume_mount_root(volume))
-    mount_file = str(state.get("mount_file") or "").strip()
-    if not mount_file:
-        raise RuntimeError(f"scenario {scenario!r} does not record a mount file")
-    if mount_file.startswith(mount_root):
-        logical_path = mount_file[len(mount_root) :].lstrip("/")
-    else:
-        logical_path = mount_file.lstrip("/")
-    if not logical_path:
-        raise RuntimeError(f"scenario {scenario!r} does not record a usable logical path")
+    logical_path = validate_posix_source_choice_state(state, volume=volume, scenario=scenario)
+    kind = state["kind"]
+    mount_file = state["mount_file"]
 
     metadata_by_host = state.get("metadata_tuple_by_host") or {}
     if not isinstance(metadata_by_host, dict) or not metadata_by_host:
@@ -2388,7 +2406,7 @@ def build_file_posix_metadata_split_brain_plan_from_canary_state(
 
     metadata_pending_value = str(state.get("metadata_pending_value") or "").strip()
     afr_pending_xattrs_by_host = state.get("afr_pending_xattrs_by_host") or {}
-    brick_roles_by_host = canary_api._brick_roles_by_host(volume, state.get("brick_roles_by_host"))
+    brick_roles_by_host = dict(state["brick_roles_by_host"])
     if not isinstance(afr_pending_xattrs_by_host, dict):
         afr_pending_xattrs_by_host = {}
     action = {

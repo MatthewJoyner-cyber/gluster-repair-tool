@@ -1,5 +1,119 @@
 # Migration candidate validation
 
+R13 local portability checked 2026-09-20 on Linux with CPython 3.12.3:
+
+- A file-only copy from the 151-file public inventory, with no Git database or
+  private files, passed the full suite under UID 1000, a fresh HOME/XDG state
+  and isolated Python environment: 813 tests, one ACL-dependent skip.
+- Four process-level tests cover installed Python entry-point help from outside
+  the checkout, fresh user-state creation, explicit work/backup overrides,
+  unusable roots and permission-denied roots. Two older tests had frozen the
+  import-time default across a changed XDG environment; they now assert the
+  active process default.
+- All 110 Python sources parse; 78 local Markdown links resolve. The external
+  identifier privacy scan, ten shell syntax checks and diff whitespace check
+  pass. See [tested scope and deployment limits](PORTABILITY.md).
+- Only this local Linux/Python pair was available. Separate clean-host account,
+  ownership, sudoers, Gluster and broader interpreter/distribution qualification
+  remain open; no live volume was contacted.
+
+R12 implementation checked 2026-09-20 on Linux with Python 3.12.3:
+
+- Complete suite in a disposable HOME with inherited GLUSTER/XDG settings and
+  PYTHONPATH removed: 809 tests, passed with one ACL-dependent skip.
+- Both public manager commands forward `--log-out` through each of the five
+  focused evidence routes. A real local path-route run creates the log and
+  records it in status; a simulated permission denial stops before manifest
+  and status output. Status reporting exposes the recorded path.
+- The candidate inventory has 149 files; all 109 Python sources parse and 71
+  local Markdown links resolve. The external-identifier privacy scan, all ten
+  shell syntax checks and diff whitespace check pass.
+- No live host or Gluster evidence was contacted for this validation. R13
+  clean-host and platform qualification remains open.
+
+R11 implementation checked 2026-09-20 on Linux with Python 3.12.3:
+
+- Complete suite in a disposable HOME with inherited GLUSTER/XDG settings and
+  PYTHONPATH removed: 805 tests, passed with one ACL-dependent skip.
+- Eight focused regressions cover path/GFID/index live split-brain identity,
+  path-only unknown identity, synthetic `localhost` source accounting, an
+  unavailable live guard, read-only AFR inspection, copied-bundle redaction,
+  missing artifact inventory and refusal of an unlisted private contact.
+- The candidate inventory has 148 files; all 108 Python sources parse and 71
+  local Markdown links resolve. The external-identifier privacy scan, all ten
+  shell syntax checks and diff whitespace check pass.
+- No live host, AFR output, prior resolver record or support submission was
+  collected in this local pass. See [support evidence and remaining work](SUPPORT_EVIDENCE.md).
+
+R10 implementation checked 2026-09-20 on Linux with Python 3.12.3:
+
+- Complete suite in a disposable HOME with inherited GLUSTER/XDG settings and
+  PYTHONPATH removed: 797 tests, passed with one ACL-dependent skip.
+- Seven new matcher tests cover exact volume-relative paths, neighbouring
+  basenames/prefixes, similar mount roots, trailing slashes, unparsed text,
+  split-brain suffixes and canonical/nonmatching GFID rows. The focused
+  canary suite passed 152 tests. One older fixture was updated from an
+  unparsed mount path to a Gluster-style row.
+- The matcher is used at both file metadata canary capture sites. It does not
+  turn a saved observation into current repair evidence. Live Gluster output
+  and R1 identity qualification remain open. See [matching limits](HEAL_ROW_MATCHING.md).
+- All 106 Python sources parse; file inventory, local documentation links,
+  privacy scan, shell syntax and diff whitespace checks pass.
+
+R9 implementation checked 2026-09-20 on Linux with Python 3.12.3:
+
+- Complete suite in a disposable HOME with inherited GLUSTER/XDG settings and
+  PYTHONPATH removed: 790 tests, passed with one ACL-dependent skip.
+- Ten new eligibility tests cover valid x3 data/arbiter fixtures, legacy or
+  conflicting x4 topology, unsupported versions/provenance, pending or partial
+  state, missing/wrong split-brain rows, canonical GFID rows, and mismatched
+  identities/metadata. Creator coverage also refuses an arbiter source before
+  volume mutation. The pre-fix run admitted 56 invalid state variants.
+- All 105 Python sources parse; the 143-file inventory and local documentation
+  links match; the external-identifier privacy scan is clean. The modified
+  shell helper passes syntax checking, as does the diff whitespace check.
+- This is a saved canary-state bridge, not live proof of a current split-brain
+  row. Exact matching at capture time remains R10, and R1 live identity plus
+  privileged/deployed qualification remain open. See [bridge limits](CANARY_SOURCE_CHOICE.md).
+
+R8 implementation checked 2026-09-20 on Linux with Python 3.12.3:
+
+- Complete suite in a disposable HOME with inherited GLUSTER/XDG settings and
+  PYTHONPATH removed: 779 tests, passed with one ACL-dependent skip.
+- Eleven helper-contract tests run generated commands through the actual
+  shell helper, with SSH/sudo transport and low-level operations stubbed.
+  The pre-fix run reproduced mdata/mkdir/stat incompatibilities, malformed
+  xattrs reaching setfattr, and a failed ACL read masked by pipeline success.
+- Tests cover mdata preview/executor agreement, GFID/AFR values and invalid
+  encodings, metadata commands, quote-preserving operands, GFID links,
+  planned backup/revert argv, rsync dispatch and failure propagation.
+- All 103 Python sources parse; shell syntax, local documentation links and
+  the file inventory pass. The external-identifier privacy scan is clean.
+- Deployed helper/privilege qualification and Gluster-specific metadata
+  semantics remain open. These local checks do not authorize live writes or
+  close the remaining R9-R13 findings. See [helper limits](HOST_HELPER_CONTRACT.md).
+
+R7 implementation checked 2026-09-20 on Linux with Python 3.12.3:
+
+- Complete suite in a disposable HOME, with inherited GLUSTER/XDG settings and
+  PYTHONPATH removed: 768 tests, passed with one ACL-dependent skip.
+- Twelve bootstrap tests cover the real installer in a fresh directory outside
+  the checkout, all six entry-point help commands, repeat upgrades, missing or
+  invalid packages, package-preserving simulated transport, sudoers/helper argv
+  parity, unsupported layouts, and preflight success/failure without key
+  generation or staging. Volume preflight also requires a key for every peer
+  and avoids temporary files. Missing operator public keys and partial service
+  keypairs fail before transport.
+- All 102 Python sources parse and all ten shell sources pass syntax checks.
+  The candidate inventory and local documentation links match, and the
+  external-identifier privacy scan is clean.
+- Clean-host account creation, privileged file ownership, actual sudoers
+  validation, the broader interpreter/platform matrix and live acceptance
+  remain open. Separate deploy-script preview side effects are recorded in TODO.
+  See [bootstrap contract and limits](BOOTSTRAP.md).
+- R8-R13 and prior live/privileged qualification items remain open. R7 changes
+  are not a completed-review checkpoint.
+
 R5/R6 implementation checked 2026-09-20 on Linux with Python 3.12.3 and rsync 3.2.7:
 
 - Complete suite in a disposable HOME, with inherited GLUSTER/XDG settings and

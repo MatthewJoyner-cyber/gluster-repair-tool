@@ -1353,7 +1353,9 @@ def _support_summary(paths: Any, summary: dict[str, Any], card: SimpleDecisionCa
         "assistants",
     ):
         if artifacts.get(name):
-            lines.append(f"  {name}: {artifacts[name]}")
+            artifact_path = Path(artifacts[name])
+            state = "present" if artifact_path.is_file() else "missing"
+            lines.append(f"  {name}: {artifact_path} ({state}; not yet redacted)")
     if card.action_type == "review_persistent_split_brain_marker":
         lines.extend(
             [
@@ -1365,8 +1367,8 @@ def _support_summary(paths: Any, summary: dict[str, Any], card: SimpleDecisionCa
     lines.extend(
         [
             "",
-            "The run reached an operator decision; this handoff preserves the bounded evidence for follow-up.",
-            "Open a Gluster/vendor support case and attach this summary plus the bounded artifacts above.",
+            "The run reached an operator decision; this is a local draft, not a submitted support case.",
+            "Open a Gluster/vendor support case only after copying, redacting and reviewing present bounded evidence.",
             "Do not attach file payloads, credentials, or unrelated paths without review.",
         ]
     )

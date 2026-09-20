@@ -64,22 +64,39 @@ chown_cmd() {
 }
 
 setfattr_cmd() {
-  [[ ${1:-} == "-n" ]] || die "setfattr requires '-n trusted.gfid'"
+  [[ ${1:-} == "-n" ]] || die "setfattr requires '-n NAME'"
   local name="${2:-}"
   case "$name" in
-    trusted.gfid|trusted.afr.*) ;;
-    *) die "setfattr only allows trusted.gfid or trusted.afr.*" ;;
+    trusted.gfid|trusted.glusterfs.mdata) ;;
+    trusted.afr.*)
+      [[ "$name" =~ ^trusted\.afr\.[A-Za-z0-9_.-]+$ ]] || die "invalid AFR attribute name"
+      ;;
+    *) die "setfattr only allows trusted.gfid, trusted.glusterfs.mdata or trusted.afr.*" ;;
   esac
   [[ ${3:-} == "-v" ]] || die "setfattr requires '-v'"
   local value="${4:-}"
   case "$name" in
-    trusted.gfid) [[ $value == 0s* ]] || die "setfattr value must be base64-encoded gfid" ;;
-    trusted.afr.*) [[ $value == 0x* ]] || die "setfattr value must be hex for trusted.afr.*" ;;
+    trusted.gfid)
+      # Sixteen bytes require 22 base64 characters and two padding characters.
+      # Only two data bits remain in the final character; reject nonzero pad bits.
+      [[ "$value" =~ ^0s[A-Za-z0-9+/]{21}[AQgw]==$ ]] || die "setfattr GFID must be canonical base64 for 16 bytes"
+      ;;
+    trusted.glusterfs.mdata|trusted.afr.*)
+      [[ "$value" =~ ^0x([0-9A-Fa-f]{2})+$ ]] || die "setfattr value must be nonempty whole hex bytes"
+      ;;
   esac
   shift 4
   [[ ${1:-} == "--" ]] && shift
   [[ $# -eq 1 ]] || die "setfattr expects one path"
   exec setfattr -n "$name" -v "$value" -- "$1"
+}
+
+stat_cmd() {
+  [[ ${1:-} == "-c" && ${2:-} == "%F" ]] || die "stat requires '-c %F'"
+  shift 2
+  [[ ${1:-} == "--" ]] && shift
+  [[ $# -eq 1 ]] || die "stat expects one path"
+  exec stat -c '%F' -- "$1"
 }
 
 getfattr_cmd() {
@@ -247,12 +264,25 @@ brick_kick_cmd() {
 
 [[ $# -gt 0 ]] || die "missing command"
 case "$1" in
+  -h|--help)
+    cat <<'EOF'
+Usage: gluster-host-ops.sh COMMAND [arguments]
+Commands: mkdir, rm, cp, mv, chmod, chown, stat, setfattr, getfattr,
+          link-file-gfid, link-directory-gfid, getfacl, setfacl,
+          rsync-server, rsync-pull,
+          brick-online --volume VOLUME --brick PATH,
+          brick-down --volume VOLUME --brick PATH,
+          brick-kick --volume VOLUME
+This privileged helper is normally invoked by the repair tool.
+EOF
+    ;;
   mkdir) shift; mkdir_cmd "$@" ;;
   rm) shift; rm_cmd "$@" ;;
   cp) shift; cp_cmd "$@" ;;
   mv) shift; mv_cmd "$@" ;;
   chmod) shift; chmod_cmd "$@" ;;
   chown) shift; chown_cmd "$@" ;;
+  stat) shift; stat_cmd "$@" ;;
   setfattr) shift; setfattr_cmd "$@" ;;
   getfattr) shift; getfattr_cmd "$@" ;;
   link-file-gfid|link-directory-gfid) link_gfid_cmd "$1" "${@:2}" ;;

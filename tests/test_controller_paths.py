@@ -9,7 +9,6 @@ from pathlib import Path
 from unittest.mock import patch
 
 from gluster_heal_tool.controller_paths import (
-    DEFAULT_WORK_ROOT,
     default_backup_archive_dir,
     default_brick_layout_path,
     default_canary_stage_local_path,
@@ -44,14 +43,15 @@ class ControllerPathTests(unittest.TestCase):
             self.assertEqual(Path("/tmp/example-home/backups"), default_backup_archive_dir())
 
     def test_default_work_root_uses_user_state(self) -> None:
-        self.assertEqual(DEFAULT_WORK_ROOT, default_work_root())
-        self.assertEqual(DEFAULT_WORK_ROOT / "gluster-repair-status.json", default_status_file_path())
-        self.assertEqual(DEFAULT_WORK_ROOT / "heal-info", default_heal_info_root())
-        self.assertEqual(DEFAULT_WORK_ROOT / "gluster-repair", default_temp_mount_root())
-        self.assertEqual(DEFAULT_WORK_ROOT / "health-check" / "gtest-health-check.json", default_health_report_path("gtest"))
-        self.assertEqual(DEFAULT_WORK_ROOT / "brick-layout" / "gtest-brick-layout.json", default_brick_layout_path("gtest"))
-        self.assertTrue(default_stage_local_path("/nested/path").startswith(str(DEFAULT_WORK_ROOT / "gluster-repair-stage")))
-        self.assertTrue(default_canary_stage_local_path("repair-canary", "payload.txt").startswith(str(DEFAULT_WORK_ROOT / "repair-canary")))
+        expected = Path.home() / ".local/state/gluster-repair/work"
+        self.assertEqual(expected, default_work_root())
+        self.assertEqual(expected / "gluster-repair-status.json", default_status_file_path())
+        self.assertEqual(expected / "heal-info", default_heal_info_root())
+        self.assertEqual(expected / "gluster-repair", default_temp_mount_root())
+        self.assertEqual(expected / "health-check" / "gtest-health-check.json", default_health_report_path("gtest"))
+        self.assertEqual(expected / "brick-layout" / "gtest-brick-layout.json", default_brick_layout_path("gtest"))
+        self.assertTrue(default_stage_local_path("/nested/path").startswith(str(expected / "gluster-repair-stage")))
+        self.assertTrue(default_canary_stage_local_path("repair-canary", "payload.txt").startswith(str(expected / "repair-canary")))
 
     def test_default_repair_run_dir_uses_timestamped_runs_tree(self) -> None:
         started_at = datetime(2026, 6, 24, 12, 34, 56, tzinfo=timezone.utc)
@@ -59,7 +59,7 @@ class ControllerPathTests(unittest.TestCase):
         run_dir = default_repair_run_dir("gtest", "run-123", started_at)
 
         self.assertEqual(
-            DEFAULT_WORK_ROOT / "runs" / "20260624T123456Z-gtest-run-123",
+            Path.home() / ".local/state/gluster-repair/work/runs/20260624T123456Z-gtest-run-123",
             run_dir,
         )
 

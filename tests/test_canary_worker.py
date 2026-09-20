@@ -423,47 +423,20 @@ class CanaryWorkerTests(TestCase):
         canary_file.run_heal.assert_called_once_with("gtest3")
 
     def test_file_posix_metadata_split_brain_plan_bridge_exposes_native_source_brick(self) -> None:
-        state = {
-            "kind": "file-posix-metadata-split-brain",
-            "mount_root": "/testvol",
-            "mount_file": "/testvol/repair-canary-posix/alpha/payload.txt",
-            "metadata_tuple_by_host": {
-                "brick-a": {"mode_bits": 420, "uid": 1000, "gid": 1000, "acl_access": "user::rw-", "acl_default": ""},
-                "brick-b": {"mode_bits": 384, "uid": 1000, "gid": 1000, "acl_access": "user::r--", "acl_default": ""},
-                "brick-c": {"mode_bits": 256, "uid": 1000, "gid": 1000, "acl_access": "user::r--", "acl_default": ""},
-                "brick-d": {"mode_bits": 420, "uid": 1000, "gid": 1000, "acl_access": "user::rw-", "acl_default": ""},
-            },
-            "metadata_backend_by_host": {
-                "brick-a": "/brick/a/repair-canary-posix/alpha/payload.txt",
-                "brick-b": "/brick/b/repair-canary-posix/alpha/payload.txt",
-                "brick-c": "/brick/c/repair-canary-posix/alpha/payload.txt",
-                "brick-d": "/brick/d/repair-canary-posix/alpha/payload.txt",
-            },
-            "metadata_fields_to_align": ["mode", "uid", "gid", "acl_access"],
-            "metadata_pending_value": "000000000000000100000000",
-            "afr_pending_xattrs_by_host": {
-                "brick-a": [{"name": "trusted.afr.testvol-client-0"}],
-                "brick-b": [{"name": "trusted.afr.testvol-client-1"}],
-                "brick-c": [{"name": "trusted.afr.testvol-client-2"}],
-                "brick-d": [{"name": "trusted.afr.testvol-client-3"}],
-            },
-            "heal_info_before": "heal info before\n/gtest/repair-canary-file-metadata-split-brain/alpha/payload.txt",
-            "heal_info_split_brain_before": "split before",
-            "heal_info_after": "heal info after\n/gtest/repair-canary-file-metadata-split-brain/alpha/payload.txt",
-            "heal_info_split_brain_after": "split after",
-            "gluster_visible_metadata_split_brain": True,
-            "brick_roles_by_host": {"brick-a": "data", "brick-b": "data", "brick-c": "arbiter", "brick-d": "data"},
-            "metadata_source_reason": "native_gluster_source",
-        }
+        from tests.test_canary_eligibility import posix_state_fixture
+
+        state = posix_state_fixture()
+        state["brick_roles_by_host"]["host-c"] = "arbiter"
+        state["metadata_source_reason"] = "native_gluster_source"
         with patch("gluster_heal_tool.canary_file._read_state", return_value=state):
-            plan = build_file_posix_metadata_split_brain_plan_from_canary_state(volume="testvol", scenario="repair-canary-posix")
+            plan = build_file_posix_metadata_split_brain_plan_from_canary_state(volume="example", scenario="fixture")
 
         _assert_canary_state_provenance(
             self,
             plan,
             kind="file-posix-metadata-split-brain",
-            volume="testvol",
-            scenario="repair-canary-posix",
+            volume="example",
+            scenario="fixture",
         )
         self.assertEqual(1, len(plan["actions"]))
         action = plan["actions"][0]
@@ -473,13 +446,13 @@ class CanaryWorkerTests(TestCase):
         self.assertEqual("native_gluster_source", action["metadata_source_reason"])
         self.assertTrue(any("native resolution mode: source-brick after source selection" in note for note in action["notes"]))
         self.assertTrue(any("POSIX metadata by host:" in note for note in action["notes"]))
-        self.assertEqual({"brick-a": "data", "brick-b": "data", "brick-c": "arbiter", "brick-d": "data"}, action["brick_roles_by_host"])
+        self.assertEqual({"host-a": "data", "host-b": "data", "host-c": "arbiter"}, action["brick_roles_by_host"])
         self.assertTrue(any("brick roles by host:" in note for note in action["notes"]))
-        self.assertTrue(any("brick-c: arbiter" in note for note in action["notes"]))
+        self.assertTrue(any("host-c: arbiter" in note for note in action["notes"]))
         results = build_apply_results(plan, execution_mode="dry-run", backup_mode="required", batch=True)
         rendered = render_apply_run(results)
         self.assertIn("brick roles by host:", rendered)
-        self.assertIn("brick-c: arbiter", rendered)
+        self.assertIn("host-c: arbiter", rendered)
 
     def test_file_posix_metadata_split_brain_plan_bridge_rejects_direct_x4_fixture(self) -> None:
         state = {
@@ -551,6 +524,7 @@ class CanaryWorkerTests(TestCase):
             ),
             patch("gluster_heal_tool.canary_file._ensure_canary_mount"),
             patch("gluster_heal_tool.canary_file._mountpoint_supports_acl", return_value=False),
+            patch("gluster_heal_tool.canary_file.canary_api._brick_roles_by_host", return_value={"node-a": "data", "node-b": "data", "node-d": "data"}),
             patch(
                 "gluster_heal_tool.canary_file._run_local",
                 side_effect=RuntimeError("stop after heal-disable request"),
@@ -571,6 +545,25 @@ class CanaryWorkerTests(TestCase):
         )
         self.assertEqual("file-posix-metadata-split-brain", write_state.call_args.args[2]["kind"])
         self.assertTrue(write_state.call_args.args[2]["partial"])
+
+    def test_file_posix_split_brain_refuses_arbiter_source_before_mutation(self) -> None:
+        hosts = ["node-a", "node-b", "node-c"]
+        with (
+            patch("gluster_heal_tool.canary_file._brick_hosts_and_backend_roots",
+                  return_value=(hosts, {host: f"/brick/{host}" for host in hosts})),
+            patch("gluster_heal_tool.canary_file.canary_api._brick_roles_by_host",
+                  return_value={"node-a": "arbiter", "node-b": "data", "node-c": "data"}),
+            patch("gluster_heal_tool.canary_file._write_state") as write_state,
+            patch("gluster_heal_tool.canary_file._run_local") as run_local,
+        ):
+            with self.assertRaisesRegex(RuntimeError, "data-brick source"):
+                canary_file.create_file_posix_metadata_split_brain_canary(
+                    volume="example", scenario="fixture", mismatch_host="node-a",
+                    dir_name="alpha", file_name="payload.txt",
+                )
+        self.assertEqual(1, write_state.call_count)
+        self.assertTrue(write_state.call_args.args[2]["partial"])
+        run_local.assert_not_called()
 
     def test_file_posix_metadata_split_brain_can_leave_heal_pending(self) -> None:
         brick_hosts = ["node-a", "node-b", "node-d"]
@@ -623,6 +616,7 @@ class CanaryWorkerTests(TestCase):
             patch("gluster_heal_tool.canary_file._brick_hosts_and_backend_roots", return_value=(brick_hosts, backend_roots)),
             patch("gluster_heal_tool.canary_file._ensure_canary_mount"),
             patch("gluster_heal_tool.canary_file._mountpoint_supports_acl", return_value=False),
+            patch("gluster_heal_tool.canary_file.canary_api._brick_roles_by_host", return_value={"node-a": "data", "node-b": "data", "node-d": "data"}),
             patch("gluster_heal_tool.canary_file._local_mount_dir"),
             patch("gluster_heal_tool.canary_file._local_write_file"),
             patch("gluster_heal_tool.canary_file._run_local"),
@@ -655,6 +649,9 @@ class CanaryWorkerTests(TestCase):
         self.assertTrue(state["leave_heal_pending"])
         self.assertFalse(state["heal_crawl_triggered"])
         self.assertEqual("harness-only-pending", state["proof_label"])
+        self.assertEqual(1, state["schema_version"])
+        self.assertEqual({host: "data" for host in brick_hosts}, state["brick_roles_by_host"])
+        self.assertFalse(state["source_choice_eligible"])
         self.assertTrue(state["heal_info_contains_mount_file_before"])
         self.assertFalse(state["gluster_visible_metadata_split_brain"])
 
@@ -3138,10 +3135,15 @@ class CanaryWorkerTests(TestCase):
                 results.append(item)
             return {"host": host, "results": results}
 
+        visible_heal_row = (
+            "Brick host-a:/srv/gluster/brick-store/gtest/brick\n"
+            "/repair-canary-speed/alpha/payload.txt\n"
+            "Status: Connected\nNumber of entries: 1"
+        )
         with (
             patch("gluster_heal_tool.canary_file._brick_hosts_and_backend_roots", return_value=(["host-a", "host-b", "host-c", "host-d"], {"host-a": "/srv/gluster/brick-store/gtest/brick", "host-b": "/srv/gluster/brick-store/gtest/brick", "host-c": "/srv/gluster/brick-store/gtest/brick", "host-d": "/srv/gluster/brick-store/gtest/brick"})),
             patch("gluster_heal_tool.canary_file._run_local"),
-            patch("gluster_heal_tool.canary_file._run_local_text", side_effect=["heal info before\n" + canary_file._canary_temp_mount_root("gtest") + "/repair-canary-speed/alpha/payload.txt", "split-brain before", "heal info after\n" + canary_file._canary_temp_mount_root("gtest") + "/repair-canary-speed/alpha/payload.txt", "split-brain after"]),
+            patch("gluster_heal_tool.canary_file._run_local_text", side_effect=[visible_heal_row, "split-brain before", visible_heal_row, "split-brain after"]),
             patch("gluster_heal_tool.canary_file._local_mount_dir"),
             patch("gluster_heal_tool.canary_file._local_write_file"),
             patch("gluster_heal_tool.canary_file._canary_worker_command", side_effect=fake_worker),
@@ -3180,9 +3182,9 @@ class CanaryWorkerTests(TestCase):
         self.assertTrue(record_baseline.call_args.args[2]["file_gfid_path"].endswith(canonical_gfid))
         self.assertEqual(canonical_gfid, record_baseline.call_args.args[2]["gfid_uuid"])
         self.assertEqual(2, write_state.call_count)
-        self.assertEqual("heal info before\n" + canary_file._canary_temp_mount_root("gtest") + "/repair-canary-speed/alpha/payload.txt", write_state.call_args.args[2]["heal_info_before"])
+        self.assertEqual(visible_heal_row, write_state.call_args.args[2]["heal_info_before"])
         self.assertEqual("split-brain before", write_state.call_args.args[2]["heal_info_split_brain_before"])
-        self.assertEqual("heal info after" + chr(10) + canary_file._canary_temp_mount_root("gtest") + "/repair-canary-speed/alpha/payload.txt", write_state.call_args.args[2]["heal_info_after"])
+        self.assertEqual(visible_heal_row, write_state.call_args.args[2]["heal_info_after"])
         self.assertEqual("split-brain after", write_state.call_args.args[2]["heal_info_split_brain_after"])
         self.assertTrue(write_state.call_args.args[2]["heal_info_contains_mount_file_before"])
         self.assertTrue(write_state.call_args.args[2]["heal_info_contains_mount_file_after"])

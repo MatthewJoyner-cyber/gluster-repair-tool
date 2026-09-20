@@ -24,13 +24,44 @@
   xattrs, numeric ownership changes, ACLs and deployed remote-helper versions.
 - [x] Record the requested local R6 checkpoint with the confirmed public author
   identity. This is a development checkpoint, not release acceptance.
-- [ ] Next: R7 fresh bootstrap, then R8 host-helper contract gaps, with meaningful
-  failure tests.
-- [ ] Resolve R9-R12 legacy canary eligibility, exact heal matching, consistent
-  evidence classification, and evidence-build logging.
-- [ ] Finish R13 portability qualification. User-state defaults and explicit
-  overrides are implemented in this candidate; fresh installation, interpreter
-  compatibility, and live acceptance remain open.
+- [x] Implement R7 package-preserving bootstrap, installed entry-point checks,
+  preflight without key generation/staging, and brick-only sudoers argument
+  parity (2026-09-20; disposable local installation and transport tests).
+  See [bootstrap contract and qualification limits](../docs/BOOTSTRAP.md).
+- [x] Implement R8 host-helper mdata/encoding checks, mkdir/stat command parity,
+  and ACL source-failure propagation (2026-09-20; generated-command tests with
+  stubbed low-level operations, including backup/revert commands). See
+  [helper contract and limits](../docs/HOST_HELPER_CONTRACT.md).
+- [x] Implement R9 saved POSIX canary source-choice eligibility: versioned
+  x3 topology, identity/provenance, completed crawl, matching split-brain rows,
+  and arbiter-source refusal (2026-09-20; synthetic refusal and bridge tests).
+  See [source-choice scope](../docs/CANARY_SOURCE_CHOICE.md).
+- [x] Implement R10 exact parsed heal-row matching against the recorded
+  mount-relative path or canonical GFID (2026-09-20; collision and identity
+  tests plus canary capture regression). See [matching limits](../docs/HEAL_ROW_MATCHING.md).
+- [x] Implement R11 focused-route live split-brain guards, synthetic-seed
+  accounting, and a redacted local support-draft builder (2026-09-20; synthetic
+  tests only). See [support evidence and limits](../docs/SUPPORT_EVIDENCE.md).
+- [ ] Collect available private AFR and prior resolver records through bounded
+  routes, inventory missing artifacts, review the copied bundle, and prepare a
+  case draft if an actual support submission is wanted. No rerun to fill gaps.
+- [x] Implement R12 evidence-build/repair-meta log forwarding on all five
+  focused routes and record the path in status/report (2026-09-20; synthetic
+  dispatch, real local log creation, and write-failure tests).
+- [x] Qualify R13 local portability in a clean file-only candidate: fresh
+  unprivileged HOME/XDG state, explicit overrides, missing/unwritable roots,
+  installed help and the full offline suite (2026-09-20, Linux/Python 3.12.3).
+  Fix the test expectation that froze an import-time default across an XDG
+  environment change. See [portability limits](../docs/PORTABILITY.md).
+- [ ] Finish R13 release qualification on a separate clean host: service
+  account, ownership, sudoers, deployed helpers, supported interpreter and
+  distribution matrix, and scoped live acceptance. The local test is not a
+  claim of those outcomes.
+- [ ] Next: fix the separate deploy-script preview side effects below.
+- [ ] Fix separate deploy-script preview side effects: health/cache work runs
+  before dry-run/preflight, missing-key handling can generate keys, preflight
+  creates remote probe directories and can accept new host keys. Add refusal
+  and no-write tests; align unsupported custom layout handling with bootstrap.
 - [ ] Validate the exact clean tree, documentation commands, generated packages,
   privacy scan, licensing/attribution, and initial Git identity/history.
 - [ ] Review all remediation, then create this repository's first completed

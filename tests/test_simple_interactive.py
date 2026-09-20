@@ -2303,6 +2303,8 @@ class SimpleInteractiveTests(unittest.TestCase):
             self.assertIn(f"decisions: {paths.decisions}", handoff)
             self.assertIn(f"assistants: {paths.assistants}", handoff)
             self.assertIn(f"execute_results: {paths.root / 'execute-results.json'}", handoff)
+            self.assertIn(f"execute_results: {paths.root / 'execute-results.json'} (missing; not yet redacted)", handoff)
+            self.assertNotIn("collected", handoff.lower())
             self.assertIn("Terminal condition:", handoff)
             self.assertIn("Do not retry source selection", handoff)
 

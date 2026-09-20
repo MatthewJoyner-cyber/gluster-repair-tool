@@ -716,6 +716,7 @@ def main(argv: list[str] | None = None) -> int:
                 worker_path=args.worker_path,
                 manifest_out=args.manifest_out,
                 observations_out=args.observations_out or "",
+                log_path=args.log_out,
                 ssh_user=args.ssh_user,
                 verbose=args.verbose,
             )
@@ -733,6 +734,7 @@ def main(argv: list[str] | None = None) -> int:
                 worker_path=args.worker_path,
                 manifest_out=args.manifest_out,
                 observations_out=args.observations_out or "",
+                log_path=args.log_out,
                 ssh_user=args.ssh_user,
                 verbose=args.verbose,
             )
@@ -750,6 +752,7 @@ def main(argv: list[str] | None = None) -> int:
                 worker_path=args.worker_path,
                 manifest_out=args.manifest_out,
                 observations_out=args.observations_out or "",
+                log_path=args.log_out,
                 ssh_user=args.ssh_user,
                 verbose=args.verbose,
             )
@@ -767,6 +770,7 @@ def main(argv: list[str] | None = None) -> int:
                 worker_path=args.worker_path,
                 manifest_out=args.manifest_out,
                 observations_out=args.observations_out or "",
+                log_path=args.log_out,
                 ssh_user=args.ssh_user,
                 verbose=args.verbose,
             )
@@ -779,6 +783,7 @@ def main(argv: list[str] | None = None) -> int:
                 worker_path=args.worker_path,
                 manifest_out=args.manifest_out,
                 observations_out=args.observations_out or "",
+                log_path=args.log_out,
                 ssh_user=args.ssh_user,
                 verbose=args.verbose,
                 probe_mount=probe_mount,
@@ -802,6 +807,7 @@ def main(argv: list[str] | None = None) -> int:
             brick_path=str(summary.get("brick_path") or "").strip(),
             manifest_out=args.manifest_out,
             observations_out=args.observations_out or "",
+            evidence_log=args.log_out or "",
             repair_meta_path=str(summary.get("path") or repair_meta_input).strip(),
             repair_meta_backend_path=str(summary.get("backend_path") or "").strip(),
             repair_meta_evidence_route=str(summary.get("evidence_route") or input_kind).strip(),

@@ -1209,9 +1209,18 @@ def build_plan(
             and "heal_info_marks_split_brain" not in obj.notes
         ):
 
-            source_hosts_without_proof = sorted(set(obj.source_hosts) - set(stale_index_paths_by_host))
+            # localhost is an operator seed for these routes, not a queried brick.
+            source_hosts = set(obj.source_hosts)
+            if obj.input_source.startswith("operator_"):
+                source_hosts.discard("localhost")
+                source_hosts.update(obj.observations)
+            source_hosts_without_proof = sorted(source_hosts - set(stale_index_paths_by_host))
             resolver_error_hosts = _resolver_error_hosts(obj)
-            can_cleanup_index = not source_hosts_without_proof and not resolver_error_hosts
+            live_guard_ok = (
+                "live_split_brain_evidence_unavailable" not in obj.notes
+                and (not obj.input_source.startswith("operator_") or "live_split_brain_checked" in obj.notes)
+            )
+            can_cleanup_index = not source_hosts_without_proof and not resolver_error_hosts and live_guard_ok
             action = PlanAction(
                 action_id=action_id,
                 logical_path=logical_path,
@@ -1242,13 +1251,15 @@ def build_plan(
                 )
             else:
                 action.notes.append(
-                    "stale index cleanup is review-only until every source host in heal info has a matching proof"
+                    "stale index cleanup is review-only until every relevant brick has matching proof and current split-brain evidence"
                 )
                 if source_hosts_without_proof:
                     action.notes.append(
                         "source hosts without stale-index proof: " + ", ".join(source_hosts_without_proof)
                     )
                 action.notes.extend(_resolver_error_notes(obj))
+                if not live_guard_ok:
+                    action.notes.append("fresh live split-brain evidence is required before index cleanup")
             _attach_role_evidence(action, obj)
             actions.append(action)
             action_map[action_id] = action
@@ -2265,7 +2276,12 @@ def build_plan(
 
         if obj.object_type == "stale_glusterfs_index":
             observed_index_paths_by_host, index_error_hosts = _observed_stale_index_paths_by_host(obj)
-            can_cleanup_index = bool(observed_index_paths_by_host) and not index_error_hosts
+            live_guard_ok = (
+                "heal_info_marks_split_brain" not in obj.notes
+                and "live_split_brain_evidence_unavailable" not in obj.notes
+                and (not obj.input_source.startswith("operator_") or "live_split_brain_checked" in obj.notes)
+            )
+            can_cleanup_index = bool(observed_index_paths_by_host) and not index_error_hosts and live_guard_ok
             action = PlanAction(
                 action_id=action_id,
                 logical_path=logical_path,
@@ -2283,14 +2299,17 @@ def build_plan(
             if not can_cleanup_index:
                 action.recommended_choice = "refresh_evidence"
                 action.recommended_reason = (
-                    "No exact stale index path was confirmed on a brick; do not delete an operator-supplied path "
-                    "until fresh evidence proves it exists."
+                    "Exact index-path observation and current split-brain evidence are both required "
+                    "before cleanup."
                 )
-                action.notes.append(
-                    "stale index cleanup is blocked because no exact internal index entry was observed on a brick"
-                )
+                if not observed_index_paths_by_host:
+                    action.notes.append(
+                        "stale index cleanup is blocked because no exact internal index entry was observed on a brick"
+                    )
                 if index_error_hosts:
                     action.notes.append("resolver errors while checking index paths: " + ", ".join(index_error_hosts))
+                if not live_guard_ok:
+                    action.notes.append("fresh live split-brain evidence is required before index cleanup")
                 action.notes.append("skip this item or refresh read-only index evidence before replanning")
                 _attach_role_evidence(action, obj)
                 actions.append(action)

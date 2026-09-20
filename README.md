@@ -3,7 +3,7 @@
 GlusterFS evidence collection, repair planning, and guided recovery tooling.
 Version: `0.1.0` beta. License: [GPL-2.0-only](COPYING).
 
-**Pre-release: live qualification, fresh bootstrap and other review findings
+**Pre-release: installed-host/live qualification and other review findings
 remain open.** Use this tree for development, offline analysis, and
 explicitly scoped disposable testing. See the [open review](steering/PRE_EXPORT_REVIEW.md)
 before considering repair writes.
@@ -38,15 +38,22 @@ python3 gluster-worker.py --help
 python3 -m unittest discover -s tests -v
 ```
 
+See [local portability and deployment limits](docs/PORTABILITY.md) for the
+tested environment, state paths and remaining clean-host checks.
+
 Live operations additionally need the matching Gluster client/CLI, SSH and
 authorized remote workers. Individual operations use rsync, tar, attr/ACL
 utilities, mount tools, and constrained privilege on brick hosts. Inspect each
 operation's help and host requirements before deployment.
 
-The bootstrap scripts are present, but fresh installation and preflight
-side-effect guarantees are not yet qualified. Do not treat bootstrap
-`--preflight` as proven free of local writes. A previously installed package
-can mask the fresh-host defect.
+Bootstrap preserves the Python package layout and checks all installed entry
+points. Local tests cover fresh installation, repeated upgrades and preflight
+without key creation or staging. Only the default service account and install
+paths are supported; installed-host qualification remains open. See the
+[bootstrap contract](docs/BOOTSTRAP.md) for commands and limits.
+Controller and deployed helper versions must agree; see the
+[host-helper contract](docs/HOST_HELPER_CONTRACT.md) for supported metadata
+commands and remaining privileged qualification.
 
 ## Evidence and planning
 
@@ -55,6 +62,10 @@ are `manifest-build` or `evidence-build`, then `plan-build`, then
 `apply-build` and review. `repair-meta` is an alias for focused evidence
 collection. `repair --preview` previews proposed repairs, but collection can
 contact hosts and mount lookups can trigger Gluster healing.
+For `gluster-manager.py evidence-build` or `repair-meta`, `--log-out PATH`
+writes resolver progress to that path. A successful run records it as
+`evidence_log` in status and shows it in `status-report`; an unwritable log
+destination fails the run before its manifest is written.
 
 A saved artifact is not perpetual permission to execute it. New apply files
 carry [volume/evidence binding](docs/EXECUTION_BINDING.md); legacy unbound files
@@ -66,6 +77,8 @@ before fallback; operational errors cannot count as harmless missing targets.
 [Durable attempt records](docs/EXECUTION_JOURNAL.md) preserve command intent and
 results through ordinary exceptions and process loss. Live qualification and
 the other open findings still block unattended release use.
+For a local support handoff, see [evidence classification and copied-bundle
+preparation](docs/SUPPORT_EVIDENCE.md). A draft is not a submitted case.
 
 ## Local storage
 
@@ -97,6 +110,10 @@ repositories. See [the private/public boundary](docs/PRIVACY.md).
 The legacy canary CLI has built-in sample volume names. Always pass the
 intended disposable `--volume` explicitly; no name proves a volume is safe.
 The sample observations are wholly synthetic.
+Saved POSIX canary source-choice plans use the
+[versioned evidence bridge](docs/CANARY_SOURCE_CHOICE.md); older and direct
+replica-4 fixture states remain diagnostic.
+Canary heal visibility requires an [exact parsed row](docs/HEAL_ROW_MATCHING.md).
 
 The private predecessor is a reference archive. Local development checkpoints
 start from this sanitized source tree; no original Git database, tags, remotes

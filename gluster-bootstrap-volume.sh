@@ -27,7 +27,8 @@ Behavior:
   - Discovers brick hosts from `gluster volume info <VOLUME>`
   - Bootstraps each host in turn using gluster-bootstrap-host.sh
   - Installs controller-verified peer host keys for brick-to-brick service transfers
-  - Skips already-prepared pieces on each host
+  - Reuses accounts and service keys; updates tool files and sudoers
+  - Supports only the default service user, home, and install directory
 EOF
 }
 
@@ -70,6 +71,10 @@ done
 
 [[ -n "$VOLUME" ]] || { echo "ERROR: -v VOLUME is required" >&2; usage >&2; exit 1; }
 [[ -n "$LOGIN_USER" ]] || LOGIN_USER="$DEFAULT_OPERATOR_USER"
+if [[ "$SERVICE_USER" != gluster-repair || "$SERVICE_HOME" != /var/lib/gluster-repair || "$INSTALL_DIR" != /opt/gluster-repair ]]; then
+  echo "ERROR: unsupported layout; use gluster-repair, /var/lib/gluster-repair and /opt/gluster-repair" >&2
+  exit 1
+fi
 if [[ ! -f "$LOGIN_PRIVKEY_PATH" ]]; then
   echo "ERROR: private key not found: $LOGIN_PRIVKEY_PATH" >&2
   exit 1
@@ -93,27 +98,23 @@ fi
 
 [[ ${#HOSTS[@]} -gt 0 ]] || { echo "ERROR: no brick hosts found for volume $VOLUME" >&2; exit 1; }
 
-build_service_known_hosts() {
+read_service_known_hosts() {
   if [[ ! -f "$KNOWN_HOSTS_PATH" ]]; then
     echo "ERROR: controller known_hosts file not found: $KNOWN_HOSTS_PATH" >&2
     exit 1
   fi
-  SERVICE_KNOWN_HOSTS_PATH="$(mktemp /tmp/gluster-repair-known-hosts.XXXXXX)"
+  local records host
+  SERVICE_KNOWN_HOSTS_CONTENT=""
   for host in "${HOSTS[@]}"; do
-    if ! ssh-keygen -F "$host" -f "$KNOWN_HOSTS_PATH" | awk '!/^#/ && NF' >> "$SERVICE_KNOWN_HOSTS_PATH"; then
+    if ! records="$(ssh-keygen -F "$host" -f "$KNOWN_HOSTS_PATH" | awk '!/^#/ && NF')" || [[ -z "$records" ]]; then
       echo "ERROR: no verified SSH host key found for brick host $host in $KNOWN_HOSTS_PATH" >&2
       exit 1
     fi
+    SERVICE_KNOWN_HOSTS_CONTENT+="${records}"$'\n'
   done
-  sort -u "$SERVICE_KNOWN_HOSTS_PATH" -o "$SERVICE_KNOWN_HOSTS_PATH"
-  if [[ ! -s "$SERVICE_KNOWN_HOSTS_PATH" ]]; then
-    echo "ERROR: no verified SSH host keys found for ${VOLUME} brick hosts in $KNOWN_HOSTS_PATH" >&2
-    exit 1
-  fi
-  trap 'rm -f "$SERVICE_KNOWN_HOSTS_PATH"' EXIT
 }
 
-build_service_known_hosts
+read_service_known_hosts
 
 if [[ $PREFLIGHT -eq 1 ]]; then
   for host in "${HOSTS[@]}"; do
@@ -123,14 +124,20 @@ if [[ $PREFLIGHT -eq 1 ]]; then
       -l "$LOGIN_USER" \
       -i "$LOGIN_PRIVKEY_PATH" \
       -s "$SERVICE_USER" \
+      -m "$SERVICE_HOME" \
       -d "$INSTALL_DIR" \
       -r "$ROOT_DIR" \
       -p "$PUBKEY_PATH" \
-      -k "$SERVICE_KNOWN_HOSTS_PATH" \
+      -k "$KNOWN_HOSTS_PATH" \
       --preflight
   done
   exit 0
 fi
+
+SERVICE_KNOWN_HOSTS_PATH="$(mktemp /tmp/gluster-repair-known-hosts.XXXXXX)"
+trap 'rm -f "$SERVICE_KNOWN_HOSTS_PATH"' EXIT
+printf '%s' "$SERVICE_KNOWN_HOSTS_CONTENT" > "$SERVICE_KNOWN_HOSTS_PATH"
+sort -u "$SERVICE_KNOWN_HOSTS_PATH" -o "$SERVICE_KNOWN_HOSTS_PATH"
 
 for host in "${HOSTS[@]}"; do
   echo "==> Bootstrapping ${host}"
@@ -139,6 +146,7 @@ for host in "${HOSTS[@]}"; do
     -l "$LOGIN_USER" \
     -i "$LOGIN_PRIVKEY_PATH" \
     -s "$SERVICE_USER" \
+    -m "$SERVICE_HOME" \
     -d "$INSTALL_DIR" \
     -r "$ROOT_DIR" \
     -p "$PUBKEY_PATH" \

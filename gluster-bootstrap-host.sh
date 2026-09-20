@@ -31,10 +31,11 @@ Options:
 Behavior:
   - Creates the service account and its authorized_keys if missing.
   - Installs supplied verified peer host keys as the service account's known_hosts.
-  - Installs the tool into INSTALL_DIR if it is not already present.
+  - Installs or updates the tool and verifies all six installed entry points.
   - Writes a narrow sudoers drop-in for the worker, host-ops, and log helpers,
     or a brick-maintenance-only drop-in when --brick-ops-only is used.
-  - Is idempotent: existing accounts, keys, sudoers entries, and installs are skipped.
+  - Reuses existing accounts and service keys; updates tool files and sudoers.
+  - Only the default service user, home, and install directory are supported.
 EOF
 }
 
@@ -84,6 +85,14 @@ done
 
 [[ -n "$HOST" ]] || { echo "ERROR: -H HOST is required" >&2; usage >&2; exit 1; }
 [[ -n "$LOGIN_USER" ]] || LOGIN_USER="$DEFAULT_OPERATOR_USER"
+if [[ "$SERVICE_USER" != gluster-repair || "$SERVICE_HOME" != /var/lib/gluster-repair || "$INSTALL_DIR" != /opt/gluster-repair ]]; then
+  echo "ERROR: unsupported layout; use gluster-repair, /var/lib/gluster-repair and /opt/gluster-repair" >&2
+  exit 1
+fi
+if [[ ! "$HOST" =~ ^[a-zA-Z0-9][a-zA-Z0-9._:-]*$ || ! "$LOGIN_USER" =~ ^[a-zA-Z_][a-zA-Z0-9_.-]*\$?$ ]]; then
+  echo "ERROR: invalid host or login user" >&2
+  exit 1
+fi
 if [[ ! -f "$LOGIN_PRIVKEY_PATH" ]]; then
   echo "ERROR: private key not found: $LOGIN_PRIVKEY_PATH" >&2
   exit 1
@@ -95,16 +104,6 @@ fi
 
 ensure_pubkey() {
   if [[ -f "$PUBKEY_PATH" ]]; then
-    return 0
-  fi
-  if [[ $PREFLIGHT -eq 1 ]]; then
-    echo "ERROR: public key not found: $PUBKEY_PATH" >&2
-    exit 1
-  fi
-  if [[ "$PUBKEY_PATH" == "${DEFAULT_OPERATOR_HOME}/.ssh/id_ed25519.pub" ]]; then
-    mkdir -p "$(dirname "$PUBKEY_PATH")"
-    chmod 700 "$(dirname "$PUBKEY_PATH")"
-    ssh-keygen -q -t ed25519 -N "" -f "${PUBKEY_PATH%.pub}"
     return 0
   fi
   echo "ERROR: public key not found: $PUBKEY_PATH" >&2
@@ -126,9 +125,8 @@ ensure_service_keypair() {
   ssh-keygen -q -t ed25519 -N "" -f "$SERVICE_PRIVKEY_PATH"
 }
 
-ensure_service_keypair
-
 TOOL_FILES=(
+  gluster-bootstrap-install.sh
   gluster-host-ops.sh
   gluster-log-ops.sh
   gluster-heal-tool.py
@@ -148,8 +146,8 @@ check_local_inputs() {
       missing=1
     fi
   done
-  if [[ ${#PACKAGE_MODULES[@]} -eq 0 ]]; then
-    echo "ERROR: no package modules found under ${ROOT_DIR}/gluster_heal_tool/" >&2
+  if [[ ${#PACKAGE_MODULES[@]} -eq 0 || ! -f "${ROOT_DIR}/gluster_heal_tool/__init__.py" ]]; then
+    echo "ERROR: incomplete package under ${ROOT_DIR}/gluster_heal_tool/" >&2
     missing=1
   fi
   if [[ $missing -ne 0 ]]; then
@@ -167,12 +165,12 @@ if [[ $PREFLIGHT -eq 1 ]]; then
   echo "    service home: ${SERVICE_HOME}"
   echo "    install dir: ${INSTALL_DIR}"
   echo "    shared service keypair: ${SERVICE_PRIVKEY_PATH}"
-  if ! ssh -i "$LOGIN_PRIVKEY_PATH" -o IdentitiesOnly=yes -o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new "${LOGIN_USER}@${HOST}" "true" >/dev/null 2>&1; then
+  if ! ssh -i "$LOGIN_PRIVKEY_PATH" -o IdentitiesOnly=yes -o BatchMode=yes -o ConnectTimeout=10 -o StrictHostKeyChecking=yes -o UpdateHostKeys=no "${LOGIN_USER}@${HOST}" "true" >/dev/null 2>&1; then
     echo "ERROR: cannot reach ${HOST} as ${LOGIN_USER}" >&2
     exit 1
   fi
   if [[ "$LOGIN_USER" != "root" ]]; then
-    if ! ssh -i "$LOGIN_PRIVKEY_PATH" -o IdentitiesOnly=yes -o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new "${LOGIN_USER}@${HOST}" "sudo -n true" >/dev/null 2>&1; then
+    if ! ssh -i "$LOGIN_PRIVKEY_PATH" -o IdentitiesOnly=yes -o BatchMode=yes -o ConnectTimeout=10 -o StrictHostKeyChecking=yes -o UpdateHostKeys=no "${LOGIN_USER}@${HOST}" "sudo -n true" >/dev/null 2>&1; then
       echo "ERROR: sudo is not ready on ${HOST} for ${LOGIN_USER}" >&2
       exit 1
     fi
@@ -181,9 +179,12 @@ if [[ $PREFLIGHT -eq 1 ]]; then
   exit 0
 fi
 
+ensure_service_keypair
+
 SSH_OPTS=(
   -i "$LOGIN_PRIVKEY_PATH"
   -o IdentitiesOnly=yes
+  -o BatchMode=yes
   -o ConnectTimeout=10
   -o StrictHostKeyChecking=accept-new
 )
@@ -225,16 +226,16 @@ INSTALL_DIR="$3"
 STAGE_DIR="$4"
 BRICK_OPS_ONLY="$5"
 
+source "$STAGE_DIR/files/gluster-bootstrap-install.sh"
+verify_tool_tree "$STAGE_DIR/files"
+
 existing_entry="$(getent passwd "$SERVICE_USER" || true)"
 if [[ -n "$existing_entry" ]]; then
   current_home="$(printf '%s\n' "$existing_entry" | awk -F: '{print $6}')"
-  if [[ -n "$current_home" ]]; then
-    SERVICE_HOME="$current_home"
+  if [[ "$current_home" != "$SERVICE_HOME" ]]; then
+    echo "ERROR: unsupported existing service account home: $current_home" >&2
+    exit 1
   fi
-fi
-
-if [[ -z "$SERVICE_HOME" ]]; then
-  SERVICE_HOME="/var/lib/${SERVICE_USER}"
 fi
 
 if [[ -z "$existing_entry" ]]; then
@@ -243,7 +244,6 @@ fi
 
 install -d -o "$SERVICE_USER" -g "$SERVICE_USER" -m 0700 "$SERVICE_HOME/.ssh"
 install -d -o root -g root -m 1777 /tmp/gluster-repair
-install -d -o root -g root -m 0755 "$INSTALL_DIR"
 
 if [[ -f "$STAGE_DIR/authorized_keys.pub" ]]; then
   if [[ ! -f "$SERVICE_HOME/.ssh/authorized_keys" ]] || ! grep -qxFf "$STAGE_DIR/authorized_keys.pub" "$SERVICE_HOME/.ssh/authorized_keys"; then
@@ -268,29 +268,15 @@ if [[ -f "$STAGE_DIR/service_known_hosts" ]]; then
   install -o "$SERVICE_USER" -g "$SERVICE_USER" -m 0600 "$STAGE_DIR/service_known_hosts" "$SERVICE_HOME/.ssh/known_hosts"
 fi
 
-if [[ -d "$STAGE_DIR/files" ]]; then
-  cp -a "$STAGE_DIR/files/." "$INSTALL_DIR/"
-fi
+install_tool_tree "$STAGE_DIR/files" "$INSTALL_DIR"
 
 chown -R root:root "$INSTALL_DIR"
 chmod +x "$INSTALL_DIR/gluster-host-ops.sh" "$INSTALL_DIR/gluster-log-ops.sh" "$INSTALL_DIR/gluster-heal-tool.py" "$INSTALL_DIR/gluster-manager.py" "$INSTALL_DIR/gluster-worker.py" "$INSTALL_DIR/gluster-resolve-gfid-plus.sh"
+verify_tool_tree "$INSTALL_DIR"
 
 sudoers_tmp="$(mktemp /tmp/gluster-repair-sudoers.XXXXXX)"
-if [[ "$BRICK_OPS_ONLY" -eq 1 ]]; then
-cat > "$sudoers_tmp" <<EOF_SUDOERS
-Defaults:$SERVICE_USER !requiretty
-$SERVICE_USER ALL=(root) NOPASSWD: $INSTALL_DIR/gluster-host-ops.sh brick-down --brick *
-$SERVICE_USER ALL=(root) NOPASSWD: $INSTALL_DIR/gluster-host-ops.sh brick-kick --volume *
-EOF_SUDOERS
-else
-cat > "$sudoers_tmp" <<EOF_SUDOERS
-Defaults:$SERVICE_USER !requiretty
-$SERVICE_USER ALL=(root) NOPASSWD: $INSTALL_DIR/gluster-host-ops.sh *
-$SERVICE_USER ALL=(root) NOPASSWD: $INSTALL_DIR/gluster-log-ops.sh *
-$SERVICE_USER ALL=(root) NOPASSWD: $INSTALL_DIR/gluster-worker.py *
-$SERVICE_USER ALL=(root) NOPASSWD: $INSTALL_DIR/gluster-resolve-gfid-plus.sh *
-EOF_SUDOERS
-fi
+trap 'rm -f "$sudoers_tmp"' EXIT
+write_bootstrap_sudoers "$SERVICE_USER" "$INSTALL_DIR" "$BRICK_OPS_ONLY" "$sudoers_tmp"
 chmod 0440 "$sudoers_tmp"
 visudo -cf "$sudoers_tmp" >/dev/null
 install -o root -g root -m 0440 "$sudoers_tmp" /etc/sudoers.d/gluster-repair-worker
@@ -301,21 +287,21 @@ REMOTE
 }
 
 stage_files() {
-  ssh "${SSH_OPTS[@]}" "${LOGIN_USER}@${HOST}" "mkdir -p '$remote_stage_dir/files'"
+  ssh "${SSH_OPTS[@]}" "${LOGIN_USER}@${HOST}" "mkdir -p '$remote_stage_dir/files/gluster_heal_tool'"
   for file in "${TOOL_FILES[@]}"; do
-    scp -i "$LOGIN_PRIVKEY_PATH" -o IdentitiesOnly=yes -o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new -q \
+    scp "${SSH_OPTS[@]}" -q \
       "${ROOT_DIR}/${file}" "${LOGIN_USER}@${HOST}:${remote_stage_dir}/files/"
   done
-  scp -i "$LOGIN_PRIVKEY_PATH" -o IdentitiesOnly=yes -o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new -q \
-    "${PACKAGE_MODULES[@]}" "${LOGIN_USER}@${HOST}:${remote_stage_dir}/files/"
-  scp -i "$LOGIN_PRIVKEY_PATH" -o IdentitiesOnly=yes -o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new -q \
+  scp "${SSH_OPTS[@]}" -q \
+    "${PACKAGE_MODULES[@]}" "${LOGIN_USER}@${HOST}:${remote_stage_dir}/files/gluster_heal_tool/"
+  scp "${SSH_OPTS[@]}" -q \
     "$PUBKEY_PATH" "${LOGIN_USER}@${HOST}:${remote_stage_dir}/authorized_keys.pub"
-  scp -i "$LOGIN_PRIVKEY_PATH" -o IdentitiesOnly=yes -o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new -q \
+  scp "${SSH_OPTS[@]}" -q \
     "$SERVICE_PUBKEY_PATH" "${LOGIN_USER}@${HOST}:${remote_stage_dir}/service_gluster_repair_service.pub"
-  scp -i "$LOGIN_PRIVKEY_PATH" -o IdentitiesOnly=yes -o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new -q \
+  scp "${SSH_OPTS[@]}" -q \
     "$SERVICE_PRIVKEY_PATH" "${LOGIN_USER}@${HOST}:${remote_stage_dir}/service_gluster_repair_service"
   if [[ -n "$SERVICE_KNOWN_HOSTS_PATH" ]]; then
-    scp -i "$LOGIN_PRIVKEY_PATH" -o IdentitiesOnly=yes -o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new -q \
+    scp "${SSH_OPTS[@]}" -q \
       "$SERVICE_KNOWN_HOSTS_PATH" "${LOGIN_USER}@${HOST}:${remote_stage_dir}/service_known_hosts"
   fi
 }

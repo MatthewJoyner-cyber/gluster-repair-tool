@@ -12,8 +12,9 @@ checkpoint only after the scoped remediation is implemented and validated.
 
 Candidate progress, 2026-09-20: R1 saved-origin binding, R2 shared execution
 gates, R3 dependency-outcome checks, R4 command-outcome handling, R5 durable
-attempts and R6 backup fidelity safeguards are implemented with local regression
-coverage. R1's [scope and remaining qualification](../docs/EXECUTION_BINDING.md)
+attempts, R6 backup fidelity safeguards, R7 bootstrap fixes, R8 helper contracts
+and R9 canary eligibility plus R10 heal-row matching
+are implemented with local regression coverage. R1's [scope and remaining qualification](../docs/EXECUTION_BINDING.md)
 are explicit; this does not close the other findings or establish live acceptance.
 The findings below describe the reviewed predecessor snapshot.
 
@@ -217,6 +218,16 @@ ACL and installed-host qualification remain open. See [contract and limits](../d
 
 ### R7. Fresh bootstrap installs a flat, unimportable Python tree
 
+Candidate implementation, 2026-09-20: transport and installation retain the
+package directory. A shared installer validates sources before copying and
+checks all six installed entry points outside the checkout. Host/volume
+preflight does not create keys or staging files, brick-only sudoers matches
+the helper argument order, and unsupported service accounts/homes/prefixes
+fail explicitly. Local fresh/repeated-install and transport/failure tests pass.
+Clean-host account/privilege/sudoers qualification remains open; the separate
+deploy script's preview side effects are tracked in TODO. See the
+[bootstrap contract](../docs/BOOTSTRAP.md).
+
 Locations: `gluster-bootstrap-host.sh:272` and `:310`.
 
 Package modules are copied into the same staging directory as entry scripts,
@@ -240,6 +251,14 @@ and service-account options or reject unsupported combinations explicitly.
 
 ### R8. Directory mdata repair is rejected by its host helper
 
+Candidate implementation, 2026-09-20: the helper accepts exact mdata writes,
+checks GFID base64 and nonempty whole-byte mdata/AFR hex encodings, and rejects
+extra operands. Generated-command tests also exposed and fixed missing mkdir
+flags, the absent stat handler, and ACL source failures masked by pipeline
+success. Tests run the actual helper with stubbed transport/low-level commands,
+including planned backup/revert argv and injected failures. Privileged deployed
+qualification remains open. See [helper contract](../docs/HOST_HELPER_CONTRACT.md).
+
 Locations: `gluster_heal_tool/executor.py:323`, `gluster-host-ops.sh:67`.
 
 The executor sends setfattr for trusted.glusterfs.mdata, but host-ops accepts
@@ -252,6 +271,15 @@ validation. Tests must run generated arguments through the actual helper with
 stubbed low-level commands and cover every emitted operation, including reverts.
 
 ### R9. The replica-4 source-choice block does not cover old state
+
+Candidate implementation, 2026-09-20: the bridge requires versioned state,
+consistent x3 topology/metadata/roles, a data-brick source, completed crawl
+flags, and exact matching rows in saved split-brain snapshots. It rejects
+legacy/direct x4, pending-only, partial and conflicting states before plan
+creation. The creator records roles and version and refuses an arbiter source
+before mutation. Existing x3 bridge coverage now uses a supported fixture;
+synthetic refusal tests cover legacy and misleading evidence. This is a saved
+harness-state check, not fresh live proof. See [scope](../docs/CANARY_SOURCE_CHOICE.md).
 
 Location: `gluster_heal_tool/canary_file.py:2324`.
 
@@ -270,6 +298,13 @@ new x4 diagnostic fixture. Do not rely on setup booleans as acceptance evidence.
 
 ### R10. Heal path matching accepts an unrelated suffix
 
+Candidate implementation, 2026-09-20: both file metadata canary creation
+paths compare parsed rows to the exact volume-relative mount path or a
+canonical recorded GFID. Basename suffixes, neighbouring paths and unparsed
+text no longer set visibility flags. Tests cover mount-root component
+boundaries, trailing slashes, row suffixes, GFID identity and an existing
+capture fixture updated to real parsed output. See [matching limits](../docs/HEAL_ROW_MATCHING.md).
+
 Location: `gluster_heal_tool/canary_file.py:102`.
 
 The new suffix match treats a heal row /payload.txt as evidence for
@@ -285,6 +320,15 @@ mount roots containing similar path components, trailing slashes, exact logical
 paths, and canonical/nonmatching GFID rows.
 
 ### R11. Recent support conclusions exceed the evidence
+
+Local R11 remediation (2026-09-20): operator path/GFID/index/backend routes
+now pass a fresh split-brain snapshot into manifests; unavailable identity
+evidence blocks index cleanup, and `localhost` is excluded from brick proof.
+The local support draft labels absent artifacts and the copied-bundle builder
+redacts supplied identifiers. See [support evidence](../docs/SUPPORT_EVIDENCE.md).
+Private collection, human redaction review, safe lab-control qualification,
+and any actual upstream submission remain open; no live rerun is authorized by
+this local change.
 
 Locations: the predecessor's private support notes;
 `gluster_heal_tool/worker.py:942`, `gluster_heal_tool/manager.py:881`,
@@ -318,6 +362,12 @@ private identifiers; no nonexistent artifact is labelled collected.
 
 ### R12. Evidence-build silently ignores --log-out
 
+Local R12 remediation (2026-09-20): the public manager forwards `--log-out`
+through all five focused routes for both `evidence-build` and `repair-meta`,
+saves the path as `evidence_log`, and displays it in `status-report`. Synthetic
+dispatch and real local file creation/failure tests pass. No live evidence
+collection was part of this validation.
+
 Location: `gluster-manager.py:868`.
 
 The parser accepts --log-out, but none of the five evidence dispatch branches
@@ -329,6 +379,15 @@ parameterized path/backend/GFID/GFID-child/index CLI dispatch and a temporary
 log-file creation check, including unwritable-log failure.
 
 ### R13. Public runtime still defaults to private controller paths
+
+Local R13 qualification (2026-09-20): the portable defaults and overrides
+were exercised from a clean file-only copy under a fresh unprivileged HOME and
+XDG state root, with no private mount or agent configuration. Offline tests,
+installed entry-point help, missing/unwritable work-root refusal and status
+path checks pass. One test had incorrectly compared an import-time constant
+with a post-environment-change default; its expectation is now dynamic. See
+[portability limits](../docs/PORTABILITY.md). Privileged clean-host deployment,
+the broader interpreter/distribution matrix and live acceptance remain open.
 
 Locations: `gluster_heal_tool/controller_paths.py:11`,
 `gluster_heal_tool/backup_maintenance.py:26`.
