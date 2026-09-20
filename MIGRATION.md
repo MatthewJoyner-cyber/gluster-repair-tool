@@ -8,11 +8,12 @@
 4. Keep personal steering and operational ledgers under the user's home
    directory, outside both repositories.
 
-These candidates are staging directories, not published repositories. No Git
-database, remotes, old tags, author identities, or original ledger is imported.
-An explicitly requested local development checkpoint may establish new Git
-history before release qualification. It does not authorize publication or a
-completed-review tag. Confirm the chosen public author identity before committing.
+These candidates are staging directories, not published repositories. No
+predecessor Git database, remotes, old tags, author identities, or original
+ledger was imported. The repair-tool candidate has its own local development
+history under the author's explicitly chosen public identity. Those checkpoints
+do not authorize publication or a completed-review tag. Confirm the chosen
+public author identity before any future commit.
 
 ## What belongs where
 

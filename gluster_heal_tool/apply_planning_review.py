@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0-only
 """Review and cleanup planning helpers for Gluster repair apply results."""
 from __future__ import annotations
 

@@ -40,11 +40,14 @@
   mount-relative path or canonical GFID (2026-09-20; collision and identity
   tests plus canary capture regression). See [matching limits](../docs/HEAL_ROW_MATCHING.md).
 - [x] Implement R11 focused-route live split-brain guards, synthetic-seed
-  accounting, and a redacted local support-draft builder (2026-09-20; synthetic
-  tests only). See [support evidence and limits](../docs/SUPPORT_EVIDENCE.md).
-- [ ] Collect available private AFR and prior resolver records through bounded
-  routes, inventory missing artifacts, review the copied bundle, and prepare a
-  case draft if an actual support submission is wanted. No rerun to fill gaps.
+  accounting, and a local diagnostic bundle for optional reports to the tool
+  maintainers (2026-09-20; synthetic tests only). The bundle uses stable
+  server/IP aliases, explicit organization/person/path aliases, private output
+  modes and obvious file-content refusal. See [evidence limits](../docs/SUPPORT_EVIDENCE.md).
+- [ ] Before publication, validate diagnostic bundles against representative
+  generated artifacts and provide schema-backed metadata export where raw text
+  cannot be proven to exclude payloads or sensitive identifiers. Human review
+  remains required before a user shares a bundle.
 - [x] Implement R12 evidence-build/repair-meta log forwarding on all five
   focused routes and record the path in status/report (2026-09-20; synthetic
   dispatch, real local log creation, and write-failure tests).
@@ -57,13 +60,18 @@
   account, ownership, sudoers, deployed helpers, supported interpreter and
   distribution matrix, and scoped live acceptance. The local test is not a
   claim of those outcomes.
-- [ ] Next: fix the separate deploy-script preview side effects below.
-- [ ] Fix separate deploy-script preview side effects: health/cache work runs
-  before dry-run/preflight, missing-key handling can generate keys, preflight
-  creates remote probe directories and can accept new host keys. Add refusal
-  and no-write tests; align unsupported custom layout handling with bootstrap.
-- [ ] Validate the exact clean tree, documentation commands, generated packages,
-  privacy scan, licensing/attribution, and initial Git identity/history.
+- [x] Fix deploy-script preview/preflight side effects locally (2026-09-20):
+  health refresh only after copying, no implicit key generation, read-only
+  remote probes, verified host keys and early custom-layout refusal. Nine
+  stubbed-command tests cover refusal and no-write behavior. See
+  [deploy preview limits](../docs/DEPLOY_PREVIEW.md).
+- [x] Audit the exact 153-file candidate and generated local install tree
+  (2026-09-20): inventory, links, syntax, source notices, byte-identical
+  installed files, README help/test commands, privacy scan, and the candidate's
+  local Git identity/history. See [validation](../docs/VALIDATION.md).
+- [ ] Finish licensing/provenance review, including external contributions and
+  the companion agent's publication license; complete clean-host and live
+  acceptance gates before release.
 - [ ] Review all remediation, then create this repository's first completed
   review tag. Publish only after acceptance; keep the predecessor private.
 

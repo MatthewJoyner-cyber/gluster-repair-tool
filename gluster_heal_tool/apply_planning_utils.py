@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0-only
 """Shared utility helpers for Gluster repair apply planning."""
 from __future__ import annotations
 

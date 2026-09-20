@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0-only
 """Directory-family canary builders and observers."""
 from __future__ import annotations
 

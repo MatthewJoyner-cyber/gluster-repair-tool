@@ -437,7 +437,7 @@ class SimpleInteractiveTests(unittest.TestCase):
             self.assertTrue(_mark_persistent_split_brain_marker_for_support(paths, [current], assistants))
             cards, ready_batch = build_simple_decision_cards([current], assistants)
             self.assertEqual([], ready_batch)
-            self.assertEqual("Create a bounded support-case handoff", cards[0].recommendation)
+            self.assertEqual("Create a bounded maintainer evidence handoff", cards[0].recommendation)
             self.assertEqual((), cards[0].available_choices)
 
     def test_post_preservation_file_continuation_replays_only_remaining_steps(self) -> None:
@@ -2266,9 +2266,10 @@ class SimpleInteractiveTests(unittest.TestCase):
                 output_stream=output,
             )
             handoff = paths.support_summary.read_text(encoding="utf-8")
-            self.assertIn("Open a Gluster/vendor support case", handoff)
+            self.assertIn("LOCAL UNREDACTED", handoff)
+            self.assertIn("Do not share it directly", handoff)
             self.assertIn("write occurred: no", handoff)
-            self.assertIn("Do not attach file payloads", handoff)
+            self.assertIn("Do not include file payloads", handoff)
             self.assertNotIn("payload bytes:", handoff.lower())
             decisions = json.loads(paths.decisions.read_text(encoding="utf-8"))
             self.assertEqual("support-case", decisions["decisions"]["review:/data/file"]["choice"])

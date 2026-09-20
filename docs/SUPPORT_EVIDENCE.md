@@ -1,4 +1,10 @@
-# Support evidence and local draft
+# Maintainer diagnostic evidence
+
+After publication, users may choose to send a diagnostic case to the Gluster
+Repair Tool maintainers. The collection tool prepares a local bundle; it never
+sends one. The intended evidence is metadata such as object names, sizes,
+GFIDs, brick roles, heal rows, AFR state, and command outcomes. Do not include
+server file contents, payload samples, credentials, or unrelated files.
 
 The repair planner classifies *observations*. `review_dead_gfid_reference` is a
 review decision, not proof that a live canonical GFID handle is broken. An
@@ -20,16 +26,32 @@ for a canary-owned backend path. It reads `trusted.afr.*` names and values
 without xattr writes. Collect its existing output through the canary worker
 route when the canary and authorized host access are available. The ordinary
 host helper's narrower `getfattr` interface is not evidence that this worker
-operation is absent. A support draft should also include existing resolver
+operation is absent. A maintainer diagnostic report may also include existing resolver
 records, heal output, volume info/status, role evidence and relevant run
 artifacts. If an artifact was never collected, list it as missing; do not
 repeat a destructive or unresolved repair merely to fill a bundle.
 
-`simple` mode's handoff lists paths as **present** or **missing** and calls
-itself a local draft. To make a copied, redacted text bundle from already saved
-artifacts, create a private file with one literal private identifier per line
-(hostnames, account names, local paths, addresses, and other known identifiers),
-then run from the source checkout:
+`simple` mode's handoff lists paths as **present** or **missing**. It contains
+raw names and paths and must not be shared directly. To make a private,
+pseudonymized bundle from already saved metadata artifacts, create a private
+identifier file. Give one entry per line, such as:
+
+```text
+server:actual-brick-name
+organization:actual-organization-name
+person:actual-person-name
+account:actual-login-name
+path:/actual/private/root
+secret:actual-secret-value
+```
+
+Typed values become stable aliases (`server1`, `organization1`, `path1`) across
+the bundle. `secret:` values and untyped legacy entries become `[REDACTED]`.
+Structured Gluster brick host fields and real IP addresses are also assigned
+stable `serverN` and `ipN` aliases automatically. List organization names,
+personal names, account names, sensitive path roots, and any hostnames that
+appear only in unstructured text; the tool cannot infer all of them. Keep the
+identifier file outside the repository and run from the source checkout:
 
 ```bash
 python3 -m gluster_heal_tool.support_bundle PRIVATE_DESTINATION \
@@ -40,14 +62,18 @@ python3 -m gluster_heal_tool.support_bundle PRIVATE_DESTINATION \
 ```
 
 Missing paths appear only as `missing` in `inventory.json`. Present UTF-8
-files are copied with supplied identifiers redacted and SHA-256 hashes
-recorded. The builder rejects unlisted email and home-directory identifiers,
-symlinks, binary text, and oversized artifacts. It does not collect from a
-host, inspect payload bytes, or submit anything. The resulting
-`submission-draft.txt` is a starting point: review every copied file, including
-any other private identifiers the automated check cannot know, before sharing.
-Keep the source and output under the private operations area, outside the
-public repository. No support case submission is claimed by this project.
+metadata files are copied with aliases applied and SHA-256 hashes of the
+anonymized copies recorded. The builder refuses obvious file-content fields,
+unlisted credentials and URLs, symlinks, binary text, and oversized artifacts.
+Email addresses and user-home prefixes are removed. The output directory is
+private (`0700`) and its files are private (`0600`). It does not read server
+files referenced by artifacts, contact a host, or transmit anything.
+
+The resulting `maintainer-handoff.txt` is a starting point. Inspect **every**
+copied file before sharing: arbitrary diagnostic text can still contain an
+organization, person, path or secret that no automatic check recognizes.
+Never pass a payload dump as an artifact. Keep the source, identifier list and
+bundle under the private operations area, outside the public repository.
 
 For a lab control, first identify whether a disposable independent volume or
 isolated host set can reproduce the identity and heal-row behavior. Document

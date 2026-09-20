@@ -15,18 +15,18 @@ Options:
   -l LOGIN_USER      SSH login user on the target hosts (default: service user)
   -s SERVICE_USER    Service account on the target hosts
                      (default: gluster-repair)
-  --preflight        Check SSH, helper, and install-path readiness without copying files
+  --preflight        Read-only SSH, helper, and existing install-path checks
   --dry-run          Print the planned commands without changing hosts
-  --setup-keys       If SSH key auth is missing, try to generate/copy a key
+  --setup-keys       During deployment only, generate/copy a key if needed
   -h, --help         Show help
 
 Behavior:
   - Discovers brick hosts from `gluster volume info <VOLUME>`
-  - In dry-run mode, prints the commands it would run and exits without
-    touching remote hosts
+  - Dry-run prints the plan without health/cache work or host access
+  - Preflight requires existing keys and trusted host keys; it creates nothing
   - Checks service-account SSH key auth to each host with BatchMode first
-  - If keys are missing and `--setup-keys` is not set, prints exact commands
-  - If keys are missing and `--setup-keys` is set, tries to run `ssh-copy-id`
+  - Missing local keys fail unless `--setup-keys` is selected for deployment
+  - `--setup-keys` may generate a key and run `ssh-copy-id`; host trust is still required
 EOF
 }
 
@@ -49,7 +49,7 @@ if [[ -z "$DEFAULT_OPERATOR_HOME" ]]; then
 fi
 LOCAL_PUBKEY_PATH="${DEFAULT_OPERATOR_HOME}/.ssh/id_ed25519.pub"
 LOCAL_PRIVKEY_PATH="${DEFAULT_OPERATOR_HOME}/.ssh/id_ed25519"
-SSH_TRANSPORT="ssh -i ${LOCAL_PRIVKEY_PATH} -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new"
+SSH_TRANSPORT="ssh -i ${LOCAL_PRIVKEY_PATH} -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o UpdateHostKeys=no"
 SSH_IDENTITY_OPTS=(
   -i "${LOCAL_PRIVKEY_PATH}"
   -o IdentitiesOnly=yes
@@ -75,6 +75,24 @@ done
 [[ -n "$VOLUME" ]] || { echo "ERROR: -v VOLUME is required" >&2; usage >&2; exit 1; }
 if [[ "$INSTALL_DIR" != "/" ]]; then
   INSTALL_DIR="${INSTALL_DIR%/}"
+fi
+if [[ "$SERVICE_USER" != gluster-repair || "$INSTALL_DIR" != /opt/gluster-repair ]]; then
+  echo "ERROR: unsupported layout; use gluster-repair and /opt/gluster-repair" >&2
+  exit 1
+fi
+if [[ $PREFLIGHT -eq 1 && $SETUP_KEYS -eq 1 ]]; then
+  echo "ERROR: --preflight cannot be combined with --setup-keys" >&2
+  exit 2
+fi
+if [[ $PREFLIGHT -eq 1 && $DRY_RUN -eq 1 ]]; then
+  echo "ERROR: choose either --preflight or --dry-run" >&2
+  exit 2
+fi
+if [[ -e "$LOCAL_PRIVKEY_PATH" || -L "$LOCAL_PRIVKEY_PATH" || -e "$LOCAL_PUBKEY_PATH" || -L "$LOCAL_PUBKEY_PATH" ]]; then
+  if [[ ! -f "$LOCAL_PRIVKEY_PATH" || ! -f "$LOCAL_PUBKEY_PATH" ]]; then
+    echo "ERROR: partial local SSH keypair found; repair it before deployment." >&2
+    exit 1
+  fi
 fi
 HOST_OPS_PATH="${INSTALL_DIR}/gluster-host-ops.sh"
 REMOTE_INSTALL_DIR="$(printf '%q' "$INSTALL_DIR")"
@@ -115,14 +133,6 @@ for file in "${TOOL_FILES[@]}"; do
   TOOL_SOURCES+=( "${ROOT_DIR}/${file}" )
 done
 
-echo "==> refreshing health-check and brick-layout cache for ${VOLUME}"
-if python3 "${ROOT_DIR}/gluster-manager.py" health-check \
-  --volume "${VOLUME}" >/dev/null; then
-  echo "    health-check cache refresh: ok"
-else
-  echo "WARNING: health-check cache refresh failed; run health-check after deploy to seed the brick-layout cache." >&2
-fi
-
 check_local_inputs() {
   local missing=0
   for file in "${TOOL_FILES[@]}"; do
@@ -145,7 +155,7 @@ check_local_inputs
 print_dry_run_ssh() {
   local host="$1"
   local remote_cmd="$2"
-  printf 'DRY-RUN: ssh -i %q -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new %q %q\n' \
+  printf 'DRY-RUN: ssh -i %q -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o UpdateHostKeys=no %q %q\n' \
     "$LOCAL_PRIVKEY_PATH" "${LOGIN_USER}@${host}" "$remote_cmd"
 }
 
@@ -206,12 +216,16 @@ print_preflight_header() {
 
 ssh_ready() {
   local host="$1"
-  ssh "${SSH_IDENTITY_OPTS[@]}" -o BatchMode=yes -o ConnectTimeout=5 -o StrictHostKeyChecking=accept-new "${LOGIN_USER}@${host}" true >/dev/null 2>&1
+  ssh "${SSH_IDENTITY_OPTS[@]}" -o BatchMode=yes -o ConnectTimeout=5 -o StrictHostKeyChecking=yes -o UpdateHostKeys=no "${LOGIN_USER}@${host}" true >/dev/null 2>&1
 }
 
 ensure_local_key() {
-  if [[ -f "$LOCAL_PUBKEY_PATH" ]]; then
+  if [[ -f "$LOCAL_PRIVKEY_PATH" && -f "$LOCAL_PUBKEY_PATH" ]]; then
     return 0
+  fi
+  if [[ -e "$LOCAL_PRIVKEY_PATH" || -e "$LOCAL_PUBKEY_PATH" ]]; then
+    echo "ERROR: partial local SSH keypair found; repair it before deployment." >&2
+    return 1
   fi
   mkdir -p "$(dirname "$LOCAL_PRIVKEY_PATH")"
   chmod 700 "$(dirname "$LOCAL_PRIVKEY_PATH")"
@@ -233,32 +247,36 @@ EOF
 
 check_or_setup_keys() {
   local host="$1"
+  if [[ ! -f "$LOCAL_PRIVKEY_PATH" || ! -f "$LOCAL_PUBKEY_PATH" ]]; then
+    if [[ $SETUP_KEYS -eq 1 && $PREFLIGHT -eq 0 ]]; then
+      ensure_local_key || return 1
+    else
+      echo "ERROR: existing local SSH private/public keypair required for ${host}; use bootstrap or explicitly run deployment with --setup-keys." >&2
+      return 1
+    fi
+  fi
   if ssh_ready "$host"; then
     return 0
   fi
-  if [[ $SETUP_KEYS -eq 1 ]]; then
-    ensure_local_key
+  if [[ $SETUP_KEYS -eq 1 && $PREFLIGHT -eq 0 ]]; then
     if command -v ssh-copy-id >/dev/null 2>&1; then
       echo "Attempting ssh-copy-id for ${host}"
-      ssh-copy-id -i "${LOCAL_PUBKEY_PATH}" -o IdentitiesOnly=yes -o IdentityFile="${LOCAL_PRIVKEY_PATH}" "${LOGIN_USER}@${host}" || true
+      ssh-copy-id -i "${LOCAL_PUBKEY_PATH}" -o IdentitiesOnly=yes -o IdentityFile="${LOCAL_PRIVKEY_PATH}" -o StrictHostKeyChecking=yes -o UpdateHostKeys=no "${LOGIN_USER}@${host}" || true
       if ssh_ready "$host"; then
         return 0
       fi
     fi
   fi
-  ensure_local_key
   print_key_help "$host"
   return 1
 }
 
 check_remote_prereqs() {
   local host="$1"
-  local probe_path="/tmp/gluster-repair-host-ops-probe-${host}-$$"
-  local remote_probe_path
-  remote_probe_path="$(printf '%q' "$probe_path")"
-  local remote_cmd="sudo -n ${REMOTE_HOST_OPS_PATH} mkdir -p -- ${remote_probe_path} && sudo -n ${REMOTE_HOST_OPS_PATH} rm -rf -- ${remote_probe_path} && sudo -n ${REMOTE_RESOLVER_PATH} -h >/dev/null"
-  if ssh "${SSH_IDENTITY_OPTS[@]}" -o BatchMode=yes -o StrictHostKeyChecking=accept-new "${LOGIN_USER}@${host}" \
-    "$remote_cmd" >/dev/null 2>&1; then
+  if ssh "${SSH_IDENTITY_OPTS[@]}" -o BatchMode=yes -o StrictHostKeyChecking=yes -o UpdateHostKeys=no "${LOGIN_USER}@${host}" \
+    "sudo -n ${REMOTE_HOST_OPS_PATH} --help" >/dev/null 2>&1 &&
+    ssh "${SSH_IDENTITY_OPTS[@]}" -o BatchMode=yes -o StrictHostKeyChecking=yes -o UpdateHostKeys=no "${LOGIN_USER}@${host}" \
+    "sudo -n ${REMOTE_RESOLVER_PATH} -h" >/dev/null 2>&1; then
     return 0
   fi
   echo "ERROR: ${host} is missing a usable host-ops/resolver helper or sudoers wiring; run gluster-bootstrap-volume.sh first." >&2
@@ -267,15 +285,12 @@ check_remote_prereqs() {
 
 check_remote_install_path() {
   local host="$1"
-  local probe_path="${INSTALL_DIR}/.deploy-preflight-${host}-$$"
-  local remote_probe_path
-  remote_probe_path="$(printf '%q' "$probe_path")"
-  local remote_cmd="sudo -n ${REMOTE_HOST_OPS_PATH} mkdir -p -- ${REMOTE_INSTALL_DIR} && sudo -n ${REMOTE_HOST_OPS_PATH} mkdir -p -- ${remote_probe_path} && sudo -n ${REMOTE_HOST_OPS_PATH} rm -rf -- ${remote_probe_path}"
-  if ssh "${SSH_IDENTITY_OPTS[@]}" -o BatchMode=yes -o StrictHostKeyChecking=accept-new "${LOGIN_USER}@${host}" \
-    "$remote_cmd" >/dev/null 2>&1; then
+  local found_type
+  if found_type="$(ssh "${SSH_IDENTITY_OPTS[@]}" -o BatchMode=yes -o StrictHostKeyChecking=yes -o UpdateHostKeys=no "${LOGIN_USER}@${host}" \
+    "sudo -n ${REMOTE_HOST_OPS_PATH} stat -c %F -- ${REMOTE_INSTALL_DIR}" 2>/dev/null)" && [[ "$found_type" == directory ]]; then
     return 0
   fi
-  echo "ERROR: ${host} cannot prepare install dir ${INSTALL_DIR}; check permissions and prefix selection." >&2
+  echo "ERROR: ${host} has no verified existing install dir ${INSTALL_DIR}; run gluster-bootstrap-volume.sh first." >&2
   return 1
 }
 
@@ -299,7 +314,7 @@ run_preflight() {
       continue
     fi
     if check_remote_install_path "$host"; then
-      echo "    install prefix: ok"
+      echo "    existing install prefix: ok"
     else
       echo "    install prefix: failed"
       missing=1
@@ -355,9 +370,9 @@ echo "==> deploying into ${INSTALL_DIR} (rsync timeout ${RSYNC_TIMEOUT}s)"
 for host in "${HOSTS[@]}"; do
   host_start="$SECONDS"
   echo "==> ${host}"
-  ssh "${SSH_IDENTITY_OPTS[@]}" -o BatchMode=yes -o StrictHostKeyChecking=accept-new "${LOGIN_USER}@${host}" \
+  ssh "${SSH_IDENTITY_OPTS[@]}" -o BatchMode=yes -o StrictHostKeyChecking=yes -o UpdateHostKeys=no "${LOGIN_USER}@${host}" \
     "sudo -n ${REMOTE_HOST_OPS_PATH} mkdir -p -- ${REMOTE_INSTALL_DIR}"
-  ssh "${SSH_IDENTITY_OPTS[@]}" -o BatchMode=yes -o StrictHostKeyChecking=accept-new "${LOGIN_USER}@${host}" \
+  ssh "${SSH_IDENTITY_OPTS[@]}" -o BatchMode=yes -o StrictHostKeyChecking=yes -o UpdateHostKeys=no "${LOGIN_USER}@${host}" \
     "sudo -n ${REMOTE_HOST_OPS_PATH} mkdir -p -- ${REMOTE_INSTALL_DIR}/gluster_heal_tool"
   rsync -q -a -e "${SSH_TRANSPORT}" --rsync-path="sudo -n ${REMOTE_HOST_OPS_PATH} rsync-server" \
     --timeout="${RSYNC_TIMEOUT}" \
@@ -371,3 +386,11 @@ for host in "${HOSTS[@]}"; do
   host_elapsed=$(( SECONDS - host_start ))
   echo "    completed in ${host_elapsed}s"
 done
+
+echo "==> refreshing health-check and brick-layout cache for ${VOLUME}"
+if python3 "${ROOT_DIR}/gluster-manager.py" health-check \
+  --volume "${VOLUME}" >/dev/null; then
+  echo "    health-check cache refresh: ok"
+else
+  echo "WARNING: health-check cache refresh failed; run health-check to seed the brick-layout cache." >&2
+fi

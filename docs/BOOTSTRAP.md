@@ -69,5 +69,6 @@ of key generation/staging. Actual account creation, privilege ownership,
 `visudo` parsing and deployment on a clean disposable host remain to be qualified.
 
 These guarantees apply to `gluster-bootstrap-host.sh` and
-`gluster-bootstrap-volume.sh`. The separate `gluster-deploy-heal-tool.sh` has
-unresolved dry-run/preflight side effects tracked in [TODO](../steering/TODO.md).
+`gluster-bootstrap-volume.sh`. The separate update script has its own
+[preview and preflight contract](DEPLOY_PREVIEW.md), tested locally with
+stubbed host commands. Its deployed-host behavior remains unqualified.

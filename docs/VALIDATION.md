@@ -1,5 +1,58 @@
 # Migration candidate validation
 
+Maintainer diagnostic bundle behavior checked 2026-09-20 on Linux with
+CPython 3.12.3:
+
+- A 153-file clean copy passed 825 offline tests under UID 1000 with fresh
+  HOME/XDG state; one ACL-dependent test was skipped. The focused evidence and
+  interactive suite passed 67 tests.
+- Synthetic metadata fixtures show stable `serverN`, `ipN`, and explicit
+  organization aliases across artifacts while retaining size and GFID facts.
+  The builder rejects obvious JSON/plain-text file-content fields, binary
+  input, symlinks and unlisted credentials before creating the bundle. Output
+  uses a private directory and private files, and nothing is transmitted.
+- The interactive handoff is labeled as an unredacted local source. Arbitrary
+  text can still contain an identifier or payload not recognized by heuristics;
+  representative generated artifacts and schema-backed metadata export remain
+  a release gate. No live host or user incident was used for these tests.
+
+Exact staged-candidate audit checked 2026-09-20 on Linux with CPython 3.12.3:
+
+- The 153-file inventory exactly matches the candidate tree, with no listed
+  symlinks. All 111 Python sources parse and 84 local Markdown links resolve.
+- A file-only copy under UID 1000 with fresh HOME/XDG state passed the README's
+  `python3 -m unittest discover -s tests -v` command: 822 tests, one
+  ACL-dependent skip. The three documented source help commands passed under
+  the same isolated environment.
+- The real local installer produced 67 files, each byte-identical to its source
+  in the clean copy. Manager, core CLI and worker help succeeded from the
+  installed tree outside the checkout. This is local packaging proof only.
+- All 121 Python/shell source and test files have a GPL-2.0-only SPDX notice;
+  ten missing notices were added. COPYING contains the GPL v2 text. A source
+  search found no embedded third-party URL, copyright or adaptation header.
+  This is an inventory check, not a determination of authorship or rights for
+  any external contribution. The companion's license remains a separate gate.
+- The external private-identifier scan found zero matches. Local Git history
+  has two commits, both using the owner-selected public name and address.
+  Archived trees and messages for both commits also passed that scan. No
+  predecessor history, remote or tag is present. No host was contacted.
+
+Deploy preview/preflight remediation checked 2026-09-20 on Linux with CPython
+3.12.3:
+
+- A 153-file clean candidate copy passed 822 offline tests under UID 1000 with
+  fresh HOME/XDG state; one ACL-dependent test was skipped.
+- Nine focused tests first reproduced health/cache work in preview, implicit
+  key generation, remote mkdir/rm probes, `accept-new` host checking and late
+  layout refusal. They now cover dry-run and preflight no-write behavior,
+  partial-key refusal and health refresh only after a stubbed successful copy.
+- All 111 Python sources parse; 83 local Markdown links resolve. The external
+  identifier privacy scan, ten shell syntax checks and diff whitespace check
+  pass. The [deploy preview contract](DEPLOY_PREVIEW.md) distinguishes these
+  local checks from deployed-host qualification.
+- No brick host or live Gluster volume was contacted. Actual SSH/sudoers,
+  install permissions, rsync and health behavior remain unqualified.
+
 R13 local portability checked 2026-09-20 on Linux with CPython 3.12.3:
 
 - A file-only copy from the 151-file public inventory, with no Git database or
@@ -231,9 +284,10 @@ The normal inherited-environment run also passed 701 tests before the fresh-home
 check. Portable defaults preserve explicit local work/backup overrides.
 No active runs, backups, mounts, service state, or remote hosts were migrated.
 
-No Git history was copied or initialized. The predecessor's source and dirty
-review work were preserved in a private checksum snapshot and remain unchanged.
-Future implementation details belong in commits, not a copied ledger.
+At this 2026-09-19 staging snapshot, no Git history was copied or initialized.
+The predecessor's source and dirty review work were preserved in a private
+checksum snapshot and remain unchanged. The candidate's later local commits
+are recorded above; future details belong in commits, not a copied ledger.
 
 Still open: the core review's safety and functionality findings, installed-host
 bootstrap, end-to-end remote metadata fidelity, supported-platform matrix,

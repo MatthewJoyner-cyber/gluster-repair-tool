@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0-only
 """Observation helpers for gtest canaries."""
 from __future__ import annotations
 

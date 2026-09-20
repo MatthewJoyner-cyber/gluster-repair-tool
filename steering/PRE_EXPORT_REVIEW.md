@@ -6,16 +6,15 @@ This review covers the private predecessor before the source-only migration.
 Source locations refer to that review snapshot; use the named function when
 line numbers change. This is a source and test review, not fresh live acceptance.
 
-**Do not move to the clean release repository yet.** Seven P1 findings and six
-P2 findings remain. Runtime code was not changed by this review. No old review tag is imported into the clean history. Create its first review
-checkpoint only after the scoped remediation is implemented and validated.
+**Do not publish or treat this candidate as release-qualified yet.** The
+predecessor review found seven P1 and six P2 issues. Local candidate fixes
+now exist for R1-R13, while scoped live and privileged qualification remains
+open. No old review tag was imported. Create this candidate's first review
+checkpoint only after the fixes and required qualification are reviewed.
 
-Candidate progress, 2026-09-20: R1 saved-origin binding, R2 shared execution
-gates, R3 dependency-outcome checks, R4 command-outcome handling, R5 durable
-attempts, R6 backup fidelity safeguards, R7 bootstrap fixes, R8 helper contracts
-and R9 canary eligibility plus R10 heal-row matching
-are implemented with local regression coverage. R1's [scope and remaining qualification](../docs/EXECUTION_BINDING.md)
-are explicit; this does not close the other findings or establish live acceptance.
+Candidate progress, 2026-09-20: R1-R12 fixes and R13 local portability are
+implemented with local regression coverage. R1's [scope and remaining qualification](../docs/EXECUTION_BINDING.md)
+are explicit; this does not establish live acceptance.
 The findings below describe the reviewed predecessor snapshot.
 
 Validation: all **699 existing tests passed**, Python compilation passed, and
@@ -224,8 +223,9 @@ checks all six installed entry points outside the checkout. Host/volume
 preflight does not create keys or staging files, brick-only sudoers matches
 the helper argument order, and unsupported service accounts/homes/prefixes
 fail explicitly. Local fresh/repeated-install and transport/failure tests pass.
-Clean-host account/privilege/sudoers qualification remains open; the separate
-deploy script's preview side effects are tracked in TODO. See the
+Clean-host account/privilege/sudoers qualification remains open. The separate
+deploy script's preview side effects were corrected in a later local change;
+see [deploy preview limits](../docs/DEPLOY_PREVIEW.md) and the
 [bootstrap contract](../docs/BOOTSTRAP.md).
 
 Locations: `gluster-bootstrap-host.sh:272` and `:310`.
@@ -326,9 +326,9 @@ now pass a fresh split-brain snapshot into manifests; unavailable identity
 evidence blocks index cleanup, and `localhost` is excluded from brick proof.
 The local support draft labels absent artifacts and the copied-bundle builder
 redacts supplied identifiers. See [support evidence](../docs/SUPPORT_EVIDENCE.md).
-Private collection, human redaction review, safe lab-control qualification,
-and any actual upstream submission remain open; no live rerun is authorized by
-this local change.
+Safe lab-control qualification remains open; no live rerun is authorized by
+this local change. The post-publication bundle is for optional reports to this
+tool's maintainers, not a vendor support case.
 
 Locations: the predecessor's private support notes;
 `gluster_heal_tool/worker.py:942`, `gluster_heal_tool/manager.py:881`,
@@ -422,7 +422,8 @@ before marking the self-contained-core release item complete.
 7. Review the implemented fixes, record results and remaining live-proof limits,
    commit when requested, and create a distinct annotated review checkpoint.
    Do not import private predecessor tags.
-8. Only then create and audit the clean release tree and its initial history.
+8. Audit the staged tree and local history, then complete the remaining
+   acceptance gates before publication.
 
 Missing coverage is primarily at real boundaries: public CLI -> canonical
 execution, saved plan -> fresh topology, prerequisite -> dependent action,

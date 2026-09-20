@@ -36,7 +36,7 @@ risk, protection/rollback, and a no-change skip.
 
 A review-only outcome is acceptable only when the tool genuinely lacks a safe
 next repair edge. It must say why, preserve the evidence, and provide a bounded
-next diagnostic step or a concrete support-case handoff; it must never be a
+next diagnostic step or a concrete maintainer evidence handoff; it must never be a
 terminal vague review.
 
 ## Planner And Executor Boundary

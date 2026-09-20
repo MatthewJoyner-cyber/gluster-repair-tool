@@ -30,9 +30,10 @@ GFIDs linked to incidents, host topology, timestamps in raw logs, customer
 filenames, and screenshots all require review. Preserve required licensing and
 public source attribution; removing private context does not remove obligations.
 
-Use separate private logs while working. Public support drafts are deliberately
-redacted copies that must be checked before sharing. A local draft is not a
-submitted case.
+Use separate private logs while working. The interactive handoff source can
+contain raw names and paths; do not share it. A maintainer diagnostic bundle
+uses pseudonyms and private output permissions, but every copied file still
+needs human review before a user chooses to share it. The tool sends nothing.
 
 The original repository and its history remain private reference material.
 A new tree is not a sanitized history rewrite. Before public initialization,

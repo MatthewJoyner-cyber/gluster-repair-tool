@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import stat
 import tempfile
 import unittest
 from pathlib import Path
@@ -113,33 +114,100 @@ class SupportBundleTests(unittest.TestCase):
         setxattr.assert_not_called()
         removexattr.assert_not_called()
 
-    def test_redacts_copy_and_reports_missing_without_claiming_submission(self) -> None:
+    def test_anonymizes_metadata_consistently_and_keeps_bundle_private(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             source = root / "heal.txt"
             private_contact = "secret" + "@" + "example.test"
-            source.write_text(f"brick private-node and owner {private_contact}\n", encoding="utf-8")
+            private_ip = ".".join(("10", "20", "30", "40"))
+            source.write_text(
+                f"Brick private-node:/bricks/volume\n"
+                f"file /data/item; size 42; GFID {GFID}; address {private_ip}; IPv6 fd00::10; "
+                f"organization Private Company; owner {private_contact}\n",
+                encoding="utf-8",
+            )
+            status = root / "status.json"
+            status.write_text(json.dumps({
+                "host": "private-node", "source_host": "second-node", "ip": private_ip,
+                "organization": "Private Company", "ipv6": "fd00::10",
+                "size": 42, "gfid": GFID,
+            }), encoding="utf-8")
             result = prepare_support_bundle(
                 root / "bundle",
-                {"heal_info": source, "afr_inspection": root / "missing-afr.txt"},
-                private_identifiers=["private-node", private_contact],
+                {"heal_info": source, "status": status,
+                 "afr_inspection": root / "missing-afr.txt"},
+                private_identifiers=["organization:Private Company"],
             )
             copied = (root / "bundle" / "heal_info.txt").read_text(encoding="utf-8")
+            copied_status = (root / "bundle" / "status.txt").read_text(encoding="utf-8")
             self.assertNotIn("private-node", copied)
             self.assertNotIn(private_contact, copied)
+            self.assertNotIn("Private Company", copied + copied_status)
+            self.assertNotIn(private_ip, copied + copied_status)
+            self.assertNotIn("fd00::10", copied + copied_status)
+            self.assertIn("server1", copied)
+            self.assertIn("server1", copied_status)
+            self.assertIn("server2", copied_status)
+            self.assertIn("ip1", copied + copied_status)
+            self.assertIn("ip2", copied + copied_status)
+            self.assertIn("organization1", copied + copied_status)
+            self.assertIn(GFID, copied)
+            self.assertIn("size 42", copied)
             self.assertEqual("missing", result["inventory"]["afr_inspection"]["status"])
             self.assertEqual("copied_redacted", result["inventory"]["heal_info"]["status"])
-            self.assertIn("not submitted", result["draft"])
+            self.assertIn("not sent", result["draft"])
+            self.assertTrue((root / "bundle" / "maintainer-handoff.txt").is_file())
+            self.assertEqual(0o700, stat.S_IMODE((root / "bundle").stat().st_mode))
+            for path in (root / "bundle").iterdir():
+                self.assertEqual(0o600, stat.S_IMODE(path.stat().st_mode))
             self.assertNotIn("afr_inspection.txt", json.dumps(result["inventory"]))
 
     def test_unlisted_private_identifier_refuses_bundle(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             source = root / "resolver.txt"
-            source.write_text("operator unknown" + "@" + "example.test\n", encoding="utf-8")
-            with self.assertRaisesRegex(ValueError, "unlisted private identifier"):
+            source.write_text("authorization: Bearer private-secret\n", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "unlisted private or sensitive value"):
                 prepare_support_bundle(root / "bundle", {"resolver_record": source},
                                        private_identifiers=["known-private-token"])
+            self.assertFalse((root / "bundle").exists())
+
+    def test_refuses_file_payload_fields_before_writing_bundle(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "observation.json"
+            source.write_text(json.dumps({
+                "gfid": GFID, "size": 42, "file_content": "private document bytes",
+            }), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "metadata-only evidence"):
+                prepare_support_bundle(root / "bundle", {"observations": source},
+                                       private_identifiers=["organization:Private Company"])
+            self.assertFalse((root / "bundle").exists())
+
+    def test_refuses_plain_text_payload_marker_and_binary_input(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "evidence.txt"
+            source.write_text("file content: private document bytes\n", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "metadata-only evidence"):
+                prepare_support_bundle(root / "bundle", {"resolver_record": source},
+                                       private_identifiers=["account:operator"])
+            source.write_bytes(b"size 42\x00payload")
+            with self.assertRaisesRegex(ValueError, "not plain text metadata"):
+                prepare_support_bundle(root / "bundle", {"resolver_record": source},
+                                       private_identifiers=["account:operator"])
+            self.assertFalse((root / "bundle").exists())
+
+    def test_refuses_symlinked_artifact_without_creating_bundle(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            real = root / "private-source.txt"
+            real.write_text("GFID " + GFID, encoding="utf-8")
+            link = root / "artifact.txt"
+            link.symlink_to(real)
+            with self.assertRaisesRegex(ValueError, "symlink"):
+                prepare_support_bundle(root / "bundle", {"heal_info": link},
+                                       private_identifiers=["account:operator"])
             self.assertFalse((root / "bundle").exists())
 
 

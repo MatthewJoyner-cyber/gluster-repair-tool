@@ -176,9 +176,9 @@ def _recommendation(result: ApplyActionResult) -> tuple[str, str]:
     }
     if result.action_type in direct_review_edges:
         return direct_review_edges[result.action_type]
-    return "Create a bounded support-case handoff", (
+    return "Create a bounded maintainer evidence handoff", (
         "This review shape has no local repair proof. Preserve the bounded artifacts and prepare a support handoff "
-        "so the case has a concrete continuation rather than ending at review."
+        "so maintainers can inspect the unresolved behavior if you choose to share it."
     )
 
 
@@ -992,7 +992,7 @@ def _assisted_recommendation(
 ) -> tuple[str, str]:
     if result.action_type == "review_persistent_split_brain_marker":
         return (
-            "Create a bounded support-case handoff",
+            "Create a bounded maintainer evidence handoff",
             "Two checksum-equal data-brick source resolvers completed, but Gluster still reports the canonical GFID. Preserve the evidence and stop rather than retrying another source or quarantining matching copies.",
         )
     recommendation, rationale = _recommendation(result)
@@ -1316,7 +1316,7 @@ def _support_summary(paths: Any, summary: dict[str, Any], card: SimpleDecisionCa
             artifacts[name] = str(getattr(paths, name))
     artifacts.setdefault("execute_results", str(Path(paths.root) / "execute-results.json"))
     lines = [
-        "Gluster repair support-case handoff",
+        "LOCAL UNREDACTED diagnostic handoff source",
         "===================================",
         f"run directory: {summary.get('run_dir', paths.root)}",
         f"volume: {summary.get('volume', 'unknown')}",
@@ -1367,9 +1367,10 @@ def _support_summary(paths: Any, summary: dict[str, Any], card: SimpleDecisionCa
     lines.extend(
         [
             "",
-            "The run reached an operator decision; this is a local draft, not a submitted support case.",
-            "Open a Gluster/vendor support case only after copying, redacting and reviewing present bounded evidence.",
-            "Do not attach file payloads, credentials, or unrelated paths without review.",
+            "The run reached an operator decision; this local file has not been sent anywhere.",
+            "This source contains raw names and paths. Do not share it directly.",
+            "If you choose to share evidence with the tool maintainers, create and review an anonymized metadata bundle first.",
+            "Do not include file payloads, credentials, or unrelated paths.",
         ]
     )
     return "\n".join(lines) + "\n"
@@ -1414,7 +1415,7 @@ def _render_card(card: SimpleDecisionCard, index: int, total: int, stream: TextI
                 "  [r] record the recommendation for later review",
                 "  [s] skip this item (no changes)",
                 "  [d] defer this sticking point",
-                "  [h] create a support-case handoff",
+                "  [h] create a maintainer evidence handoff",
                 "  [q] save and quit",
             ]
         ),
@@ -2484,7 +2485,7 @@ def run_simple_interaction(
             f"Resume interactively: gluster-manager repair --resume {paths.root} --interactive",
         )
         if support_path:
-            _write_output(output_stream, f"Support-case handoff: {support_path}")
+            _write_output(output_stream, f"Unredacted local handoff source: {support_path}")
         return 2
     if not cards:
         interaction["state"] = "clear"

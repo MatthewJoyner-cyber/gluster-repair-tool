@@ -51,6 +51,8 @@ points. Local tests cover fresh installation, repeated upgrades and preflight
 without key creation or staging. Only the default service account and install
 paths are supported; installed-host qualification remains open. See the
 [bootstrap contract](docs/BOOTSTRAP.md) for commands and limits.
+The separate update script's [dry-run and preflight contract](docs/DEPLOY_PREVIEW.md)
+keeps previews read-only; its remote deployment still needs host qualification.
 Controller and deployed helper versions must agree; see the
 [host-helper contract](docs/HOST_HELPER_CONTRACT.md) for supported metadata
 commands and remaining privileged qualification.
@@ -77,8 +79,9 @@ before fallback; operational errors cannot count as harmless missing targets.
 [Durable attempt records](docs/EXECUTION_JOURNAL.md) preserve command intent and
 results through ordinary exceptions and process loss. Live qualification and
 the other open findings still block unattended release use.
-For a local support handoff, see [evidence classification and copied-bundle
-preparation](docs/SUPPORT_EVIDENCE.md). A draft is not a submitted case.
+The optional [maintainer diagnostic bundle](docs/SUPPORT_EVIDENCE.md) lets a
+user prepare pseudonymized metadata to share after review; it does not read
+server file contents or transmit anything.
 
 ## Local storage
 

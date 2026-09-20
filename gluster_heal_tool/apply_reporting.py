@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0-only
 """Reporting and output helpers for apply planning results."""
 from __future__ import annotations
 
@@ -1135,7 +1136,7 @@ def _review_matrix_hint(result: ApplyActionResult) -> tuple[str, str, str]:
     return (
         "create_support_case",
         "This unclassified case has no local repair proof; create a bounded support handoff with the manifest, plan, logs, and current heal evidence.",
-        "choice: create support-case handoff, keep review, or skip",
+        "choice: create maintainer evidence handoff, keep review, or skip",
     )
 
 
