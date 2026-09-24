@@ -1,8 +1,10 @@
+# Copyright 2026 Matthew Joyner
 # SPDX-License-Identifier: GPL-2.0-only
 """Tests for batched canary worker operations."""
 from __future__ import annotations
 
 import subprocess
+import os
 import uuid
 from pathlib import Path
 from types import SimpleNamespace
@@ -86,10 +88,34 @@ def _assert_canary_state_provenance(
     )
 
 
+class CanaryWorkspaceTests(TestCase):
+    def test_fresh_workspace_is_operator_owned_before_mount(self):
+        from gluster_heal_tool.canary_shared import prepare_canary_workspace
+        with TemporaryDirectory() as tmp, patch.dict(os.environ, {
+            "GLUSTER_GTEST_CANARY_STATE_ROOT": str(Path(tmp)/"state/canaries"),
+            "GLUSTER_REPAIR_WORK_ROOT": str(Path(tmp)/"state/work"),
+        }):
+            prepare_canary_workspace()
+            mount_root = Path(tmp)/"state/work/mounts/example"
+            def privileged_leaf(path):
+                self.assertTrue(Path(path).parent.is_dir())
+                self.assertEqual(os.getuid(), Path(path).parent.stat().st_uid)
+            with patch.object(canary_file, "_local_mount_dir", side_effect=privileged_leaf), patch.object(canary_file, "_mountpoint_is_active", return_value=False), patch.object(canary_file.subprocess, "run", return_value=subprocess.CompletedProcess([],0,"","")):
+                canary_file._ensure_canary_mount("example", str(mount_root))
+            self.assertEqual(os.getuid(), (Path(tmp)/"state/canaries").stat().st_uid)
+
+    def test_unwritable_workspace_stops_before_builder(self):
+        with patch("gluster_heal_tool.canary._require_not_root"), patch("gluster_heal_tool.canary.prepare_canary_workspace", side_effect=PermissionError("state root")), patch("gluster_heal_tool.canary.create_file_native_pending_metadata_canary") as build:
+            with self.assertRaises(PermissionError):
+                main(["create-file-native-pending-metadata", "--volume", "example"])
+            build.assert_not_called()
+
+
 class CanaryWorkerTests(TestCase):
     def setUp(self) -> None:
         super().setUp()
         for target in (
+            "gluster_heal_tool.canary.prepare_canary_workspace",
             "gluster_heal_tool.canary_file._ensure_canary_mount",
             "gluster_heal_tool.canary_directory._ensure_canary_mount",
             "gluster_heal_tool.canary_file.run_heal",

@@ -1,5 +1,8 @@
 # Project TODO
 
+Use [release preparation](../docs/RELEASE_PREPARATION.md) for the final pre-push
+sequence. Repository names are selected; creation and publication await authority.
+
 - [x] Implement R1 saved execution-origin binding and refusal tests in the
   candidate (2026-09-20). See [binding scope and limits](../docs/EXECUTION_BINDING.md).
 - [ ] Review/qualify R1 on disposable live fixtures. Same-name volume recreation
@@ -20,8 +23,12 @@
 - [x] Implement R6 metadata-preserving transfers, archive verification, guarded
   cleanup and verified restoration (2026-09-20; local rsync/filesystem tests).
   See [backup fidelity scope](../docs/BACKUP_FIDELITY.md).
-- [ ] Qualify R6 on explicitly scoped disposable privileged fixtures: trusted
-  xattrs, numeric ownership changes, ACLs and deployed remote-helper versions.
+- [x] Qualify R6 on scoped disposable Ubuntu 24.04 guests (2026-09-24): real
+  SSH/deployed helpers, trusted/user xattrs, numeric ownership, ACLs, timestamps,
+  symlinks and cross-artifact hardlinks. Retained-archive recovery and a new
+  archive/verified-cleanup/restore cycle passed independent comparisons on two
+  remote guests after fixing read-back verification. Other platforms and original
+  repair-step backup fidelity remain outside this proof.
 - [x] Record the requested local R6 checkpoint with the confirmed public author
   identity. This is a development checkpoint, not release acceptance.
 - [x] Implement R7 package-preserving bootstrap, installed entry-point checks,
@@ -53,7 +60,8 @@
   workflows. Parsed volume-info/status and version-1 health reports export
   selected topology and readiness fields; log, worker-wrapper and remaining
   unstructured artifacts are omitted. Add only explicitly bounded schemas;
-  do not reintroduce raw-copy fallback.
+  do not reintroduce raw-copy fallback. Follow the
+  [diagnostic collection checklist](../docs/DIAGNOSTIC_COLLECTION_QUALIFICATION.md).
 - [x] Implement R12 evidence-build/repair-meta log forwarding on all five
   focused routes and record the path in status/report (2026-09-20; synthetic
   dispatch, real local log creation, and write-failure tests).
@@ -65,19 +73,35 @@
 - [ ] Finish R13 release qualification on a separate clean host: service
   account, ownership, sudoers, deployed helpers, supported interpreter and
   distribution matrix, and scoped live acceptance. The local test is not a
-  claim of those outcomes.
+  claim of those outcomes. Follow the [fresh-account test sequence](../docs/BOOTSTRAP.md):
+  separate initial administrator access from automated bootstrap, use three
+  disposable OS instances, and test real service login and every peer pair.
+  `sudo -n true` alone does not prove permission to run the installer.
+  The three-VM Ubuntu 24.04 baseline, installation, service restrictions, six
+  directed peer logins and idempotent reinstall passed on 2026-09-24. Complete
+  canary/reboot/failure coverage and retain the distribution-matrix limitation.
 - [x] Fix deploy-script preview/preflight side effects locally (2026-09-20):
   health refresh only after copying, no implicit key generation, read-only
   remote probes, verified host keys and early custom-layout refusal. Nine
   stubbed-command tests cover refusal and no-write behavior. See
   [deploy preview limits](../docs/DEPLOY_PREVIEW.md).
-- [x] Audit the exact 153-file candidate and generated local install tree
+- [x] Audit the then-153-file candidate and generated local install tree
   (2026-09-20): inventory, links, syntax, source notices, byte-identical
   installed files, README help/test commands, privacy scan, and the candidate's
   local Git identity/history. See [validation](../docs/VALIDATION.md).
-- [ ] Finish licensing/provenance review, including external contributions and
-  the companion agent's publication license; complete clean-host and live
-  acceptance gates before release.
+- [x] Re-audit the current 157-file staged inventory (2026-09-24): exact file
+  list, source notices, file-only copy with fresh HOME/XDG and no PYTHONPATH,
+  local-link checks, documented source help, the full offline suite, and a
+  byte-identical 68-file local installed tree. The external private-identifier
+  scan reported zero findings without echoing patterns. See
+  [validation](../docs/VALIDATION.md). No host or Gluster service was contacted.
+- [ ] Repeat the inventory/privacy/link/file-only/installed-tree audit after
+  freezing the final source list. The current staged audit does not replace
+  clean-host or live acceptance.
+- [x] Establish initial public provenance (2026-09-20): owner declaration,
+  source/dependency inventory and future-contribution rule are recorded in
+  [PROVENANCE.md](../PROVENANCE.md). Review each later external contribution
+  before merge.
 - [ ] Review all remediation, then create this repository's first completed
   review tag. Publish only after acceptance; keep the predecessor private.
 

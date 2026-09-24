@@ -1,3 +1,4 @@
+# Copyright 2026 Matthew Joyner
 # SPDX-License-Identifier: GPL-2.0-only
 """Focused tests for arbiter role and payload-source safety."""
 from __future__ import annotations

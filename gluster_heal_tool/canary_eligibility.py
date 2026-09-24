@@ -1,3 +1,4 @@
+# Copyright 2026 Matthew Joyner
 # SPDX-License-Identifier: GPL-2.0-only
 """Fail-closed eligibility checks for the POSIX canary's saved-state bridge."""
 from pathlib import PurePosixPath

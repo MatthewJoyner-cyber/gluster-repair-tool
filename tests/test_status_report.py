@@ -1,3 +1,4 @@
+# Copyright 2026 Matthew Joyner
 # SPDX-License-Identifier: GPL-2.0-only
 """Tests for human-readable controller status reporting."""
 from __future__ import annotations

@@ -38,6 +38,12 @@ Legacy archives remain readable, but cannot authorize backup cleanup or automati
 archive deletion because they lack the fidelity inventory. Missing metadata in
 an old archive cannot be reconstructed by adding newer transfer flags.
 
+Remote restore verification reads back through the same fake-super encoding
+used for capture. A push-direction dry run can report xattr differences between
+encoded and real privileged attributes even after correct restoration. The
+read-back comparison uses deletion reporting only with `--dry-run`, so a child
+missing remotely is detected without deleting either staged or remote data.
+
 The contract covers the selected backup artifacts, including hardlinks between
 them. It does not prove that an earlier repair-step backup captured the original
 live object correctly, or recreate links to paths outside the selection. Overlapping
@@ -53,4 +59,16 @@ backups, failed verification and restoration permissions. A synthetic fake-super
 fixture verifies that encoded privileged metadata survives archival; it is not
 privileged trusted-xattr proof. Disposable privileged testing of trusted xattrs,
 numeric ownership changes and ACL behavior, plus deployed-host/version
-qualification, remains required before release.
+qualification beyond the scoped VM result below remains required before release.
+
+On 2026-09-24, a disposable Ubuntu 24.04 / Gluster 11.1 VM lab exercised the
+installed helpers over real SSH from an unprivileged controller. Recovery from
+a retained archive passed independent comparisons on two remote guests for
+numeric ownership, access/default ACLs, trusted/user xattrs, nanosecond mtime,
+symlinks, and hardlinks spanning artifact roots. This exposed and motivated the
+read-back verification fix above. This scoped VM result does not establish
+cross-distribution coverage or the fidelity of backups made by earlier repair
+steps. A subsequent fresh archive/verified-cleanup/restore cycle also passed
+the independent comparisons on both guests. The full local suite passed 834
+tests, including real-rsync checks that read-back detects missing children and
+changed xattrs while leaving both comparison trees untouched.

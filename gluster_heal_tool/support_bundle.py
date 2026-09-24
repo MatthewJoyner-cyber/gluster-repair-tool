@@ -1,3 +1,4 @@
+# Copyright 2026 Matthew Joyner
 # SPDX-License-Identifier: GPL-2.0-only
 """Prepare a reviewable, local metadata-only maintainer handoff from saved evidence."""
 from __future__ import annotations

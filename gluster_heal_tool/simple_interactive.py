@@ -1,3 +1,4 @@
+# Copyright 2026 Matthew Joyner
 # SPDX-License-Identifier: GPL-2.0-only
 """Guided decision and guarded ready-safe execution for simple repair runs.
 

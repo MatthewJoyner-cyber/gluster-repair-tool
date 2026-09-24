@@ -40,8 +40,10 @@ commands, planned residue backup/revert commands, GFID links, and brick-side
 rsync/client-server dispatch. Cases include quoted paths, invalid encodings,
 extra operands and propagated command failures.
 
-These tests qualify command compatibility and refusal behavior. Actual trusted
-xattr writes, ACL behavior, rsync metadata fidelity and deployed helper/sudoers
-versions still require disposable privileged-host qualification. Rsync server
+These tests qualify command compatibility and refusal behavior. Separate
+Ubuntu 24.04 VM checks exercised deployed helpers/sudoers and backup round trips
+with trusted/user xattrs, ACLs and numeric ownership; see
+[backup fidelity](BACKUP_FIDELITY.md). This does not qualify every repair metadata
+write or other platform/version combinations. Rsync server
 dispatch remains a privileged interface; this change does not introduce a new
 rsync option or filesystem-path confinement policy.

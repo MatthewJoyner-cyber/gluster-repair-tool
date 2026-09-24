@@ -1,3 +1,4 @@
+# Copyright 2026 Matthew Joyner
 # SPDX-License-Identifier: GPL-2.0-only
 """Execution wave helpers for Gluster repair planning."""
 from __future__ import annotations

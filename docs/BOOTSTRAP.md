@@ -18,6 +18,29 @@ custom layouts require a coordinated runtime change.
 
 ## Preflight
 
+### First access is an administrator step
+
+A bare host is not expected to have an operator key, trusted SSH host keys,
+the repair account, or the tool's sudoers policy. Bootstrap currently starts
+after an administrator has established the initial login. It uses batch SSH
+and noninteractive sudo; it has no password-entry or first-access wizard.
+
+Use the console or an already authorized administrative login to provision
+required packages and the initial operator access. Verify the host fingerprint
+through a trusted channel before recording it. Create or select the operator
+key through the operator's normal key-management workflow; never place private
+keys or passwords in the source tree, command history, test reports or support
+bundles. A passphrase-protected key must already be usable by the invoking SSH
+process, for example through the operator's unlocked agent.
+
+For a non-root installation login, the administrator must separately arrange
+permission to execute the remote installer as root. The preflight's
+`sudo -n true` probe checks only that command; it does not prove permission for
+the later `sudo -n bash -s` installer. Record this prerequisite explicitly and
+test the actual installation on disposable hosts. Temporary installation
+privileges belong to the bootstrap administrator, not to the repair service
+account, and must be removed or reviewed when setup is complete.
+
 Supply an existing operator SSH private/public key pair and verify each host's
 SSH key in the operator's `known_hosts` before running preflight:
 
@@ -66,7 +89,52 @@ Local tests exercise the real installer in disposable directories, all six
 entry points, repeated upgrades, invalid packages and simulated SSH/SCP
 transport. Preflight tests cover failed access, missing peer keys, and absence
 of key generation/staging. Actual account creation, privilege ownership,
-`visudo` parsing and deployment on a clean disposable host remain to be qualified.
+`visudo` parsing, service login and idempotent reinstall passed on three
+disposable Ubuntu 24.04 guests on 2026-09-24. Missing-key/trust/login/sudo
+refusals and six directed service-peer connections also passed. Remaining
+failure scenarios, other distributions and physical-host policy remain open.
+
+### Fresh-account and bare-system test sequence
+
+A new operator login on an existing brick host can reveal dependence on that
+operator's HOME, keys, groups and cached trust. It cannot establish bare-system
+acceptance: installed packages, existing sudoers and the repair account remain.
+Do not delete or rename the active service account to manufacture a fresh test.
+
+Use three disposable OS instances with isolated storage and networking for the
+full sequence. Run the supported service identity `gluster-repair` at its
+normal paths inside each guest. An alternate service name is not currently
+supported; changing only the bootstrap username misses fixed peer-transfer
+paths and would not qualify the default installation. A fresh `test-operator`
+login inside the guests supplies the separate human/admin role. Use newly
+generated test credentials, with no reuse of operational service keys.
+
+An official [Ubuntu Server cloud image](https://cloud-images.ubuntu.com/releases/noble/)
+is a suitable prebuilt guest for the initial Ubuntu 24.04 test. Pin its build
+and verify its signed checksum. Seed only the guest's administrative access;
+do not pre-create the repair service user, its keys, tool files or sudoers.
+Each guest needs distinct machine and SSH host identities and a private test
+disk. Cloud-image testing starts from a preinstalled OS and does not cover
+the operating-system installer or a human's initial password-entry workflow.
+Keep lab disks independent of the Gluster volumes being investigated.
+
+| Stage | Required evidence |
+| --- | --- |
+| Bare baseline | Record OS/interpreter and missing packages; prove the repair user, group, home, install directory and sudoers drop-in are absent. Retain a restorable guest baseline. |
+| Initial administrator access | Exercise console/password or existing administrative access as applicable. Record the checkpoint outcome without secrets. Establish verified host keys and a usable operator key explicitly. |
+| Expected first-access refusals | Missing private/public key, locked key without an agent, unknown/changed host key, failed login, no sudo and insufficient installer sudo permission stop clearly. Record any staging/key side effects and clean only guest-owned test state. |
+| Fresh install | Run the real shipped bootstrap, real SSH and real sudo/visudo. Verify user, group, home and shell; home and SSH modes; key ownership; root-owned installed modules; imports outside the checkout; and all six entry-point help commands. |
+| Service access | Log in as the service account with the operator and service test keys. Verify required noninteractive helper access and inspect the effective sudo policy. Check that unrelated direct root commands and unprivileged edits to installed code are denied. An allowed helper has its own authority surface and must also be reviewed. |
+| Three-peer path | Verify service-key login and trusted peer identity in every directed guest pair. Exercise tool-generated transfers with disposable files and verify ownership, ACLs, trusted/user xattrs and hardlinks. Keep this R6 evidence distinct from an SSH login result. |
+| Repeat and failure recovery | Reinstall with existing accounts and keys; check for duplicate authorized keys and ownership drift. Inject transfer, package validation and sudoers failures. Preserve working access and document partial changes; installation is not transactional. |
+| Cleanup | Revoke test access, remove temporary installation privileges and destroy only the recorded guests/test storage. Check that original hosts' accounts, keys and tool installations were untouched. |
+
+Interactive first-access checkpoints are part of the test, not a reason to
+claim automated success. Record them separately from the repeatable bootstrap
+steps, with actual exit results and installed-state checks. VM results qualify
+the tested guest environment; different physical-host policy still needs its
+own controlled deployment check. Fresh installation alone does not qualify
+live Gluster repair correctness.
 
 These guarantees apply to `gluster-bootstrap-host.sh` and
 `gluster-bootstrap-volume.sh`. The separate update script has its own

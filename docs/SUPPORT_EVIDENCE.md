@@ -114,6 +114,10 @@ pseudonymization is not a guarantee of anonymity or truthful input. Never pass
 a payload dump as an artifact. Keep the source, identifier list and bundle under
 the private operations area, outside the public repository.
 
+The [diagnostic collection qualification checklist](DIAGNOSTIC_COLLECTION_QUALIFICATION.md)
+maps each supported label to its bounded saved source and the remaining
+disposable-fixture evidence. It does not authorize a repair or a submission.
+
 For a lab control, first identify whether a disposable independent volume or
 isolated host set can reproduce the identity and heal-row behavior. Document
 topology, roles, expected rollback and the read-only baseline before any

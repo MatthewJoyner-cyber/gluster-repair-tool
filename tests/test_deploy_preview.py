@@ -1,3 +1,4 @@
+# Copyright 2026 Matthew Joyner
 # SPDX-License-Identifier: GPL-2.0-only
 """Deploy preview and preflight must not create local or remote state."""
 from __future__ import annotations

@@ -1,3 +1,4 @@
+# Copyright 2026 Matthew Joyner
 # SPDX-License-Identifier: GPL-2.0-only
 """Run generated repair/helper argv with only low-level operations stubbed."""
 import base64

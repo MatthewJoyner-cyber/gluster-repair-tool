@@ -15,6 +15,9 @@ history under the author's explicitly chosen public identity. Those checkpoints
 do not authorize publication or a completed-review tag. Confirm the chosen
 public author identity before any future commit.
 
+Planned destinations are in [MAINTAINERS.md](MAINTAINERS.md); follow the
+[release preparation sequence](docs/RELEASE_PREPARATION.md).
+
 ## What belongs where
 
 | Material | Destination |
@@ -48,8 +51,9 @@ GLUSTER_REPAIR_PRIVATE_ROOT override. The core does not load personal steering.
   local-identifier list. Inspect any finding and scan again after remediation.
 - Qualify fresh installation and document supported Python, Linux, Gluster,
   and adapter versions. Current source tests are not deployed-host acceptance.
-- Confirm the companion's publication license/attribution before release.
-  No alternate license is selected merely by splitting repositories.
+- Both candidates use GPL-2.0-only and identify their selected public
+  copyright holder in MAINTAINERS.md. Review [source provenance](PROVENANCE.md)
+  before adding any external contribution.
 
 ## Establish the new histories
 

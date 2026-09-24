@@ -2,16 +2,16 @@
 
 The controller targets Linux with Python 3.12 or newer. Bootstrap refuses an
 older interpreter. The candidate has been exercised locally with CPython
-3.12.3 on one Linux host; later Python versions and other distributions have
+3.12.3 locally and on three fresh Ubuntu 24.04 guests; later Python versions and other distributions have
 not yet been qualified. Windows and macOS are outside this candidate's runtime
 scope. Source help and offline tests need no Gluster volume, private agent
 configuration, or personal mount.
 
 | Environment | Current evidence | Remaining check |
 | --- | --- | --- |
-| Linux, CPython 3.12.3, unprivileged account | Clean file-only copy, fresh HOME/XDG state, full offline suite and installed entry-point help pass | A separate clean host and distribution |
+| Linux, CPython 3.12.3, unprivileged account | Clean file-only copy, fresh HOME/XDG state, full offline suite and installed entry-point help pass | Repeat against the final source snapshot |
 | Python 3.13 or later | Bootstrap's minimum-version gate does not reject it; no interpreter was available for tests here | Run full suite and install check |
-| Gluster client/server and brick hosts | No live qualification from this staging pass | Matching client/server versions, account/ownership, sudoers, helper deployment and repair fixtures |
+| Ubuntu 24.04, Python 3.12.3, Gluster 11.1 | Three fresh guests passed account/ownership, real sudoers, helper deployment, all directed peer logins and repeat installation; scoped backup and native-heal canaries passed | Other distributions/versions, installation failure cases, post-volume reboot and stable repair fixtures |
 
 Work defaults to `$XDG_STATE_HOME/gluster-repair/work` when `XDG_STATE_HOME`
 is absolute, otherwise `$HOME/.local/state/gluster-repair/work`. Backup
@@ -36,4 +36,6 @@ the Gluster service commands they invoke. The
 [bootstrap contract](BOOTSTRAP.md) describes the fixed service account and
 install paths and what its local installer checks. A local test cannot
 establish account creation, privileged ownership, `visudo` acceptance or
-behavior on a fresh deployed brick; those remain release gates.
+behavior on a fresh deployed brick. Separate scoped VM checks now cover those
+installation properties; see [validation](VALIDATION.md) for the tested scope
+and the remaining release gates.

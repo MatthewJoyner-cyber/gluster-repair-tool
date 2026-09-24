@@ -1,32 +1,101 @@
 # Migration candidate validation
 
-Schema-backed maintainer diagnostic export checked 2026-09-20 on Linux with
-CPython 3.12.3:
+Local repository preparation rechecked 2026-09-24 after the VM fixes:
 
-- A 155-file clean copy passed 833 offline tests under UID 1000 with fresh
-  HOME/XDG state; one ACL-dependent test was skipped.
-- Real manifest, observation, plan, apply, execution and status writers,
-  plus the AFR inspector with stubbed xattr reads, generate synthetic fixtures.
-  Tests verify consistent host/path/action/ownership aliases while preserving
-  GFIDs, sizes, modes, roles, defined action outcomes and AFR counters.
-- Parsed Gluster volume-info/status and the version-1 health-report writer also
-  preserve aliased brick topology, online/PID state, selected readiness counts,
-  free-space facts and snapshot flags while omitting messages and raw output.
-- Unknown keys, nested free text, messages, command previews, wrong types and
-  unsupported formats/versions are excluded. Explicit file-content fields,
-  binary/NUL input, symlinks, FIFOs, directories and oversized files are refused
-  before output creation. Private modes and missing/omitted inventory entries
-  are checked. No live host or user incident was used.
-- The exact inventory, 113 Python parses, 86 local Markdown links, external
-  private-identifier scan and whitespace checks pass. All 123 Python/shell
-  sources have license notices. The local installer produces 68 files identical
-  to their sources; six installed/source entry-point help commands pass.
-- Diagnostic export now has no raw-copy fallback. Coverage qualification for
-  additional collector formats remains open; unsupported inputs are explicitly
-  omitted. Human review is required before sharing. See
-  [supported formats and limits](SUPPORT_EVIDENCE.md).
+- The public inventory now contains 158 files, including the release preparation
+  guide. A fresh file-only copy under an unprivileged account, isolated HOME/XDG
+  state and cleared inherited overrides passed all three source help commands,
+  112 local Markdown links and the source license-notice checks.
+- The copy ran 836 tests in 25.223 seconds: `OK (skipped=1)`. One restore test
+  skipped because the temporary filesystem rejected its test ACL. The earlier
+  inherited-environment run below passed all 836 without skips; privileged
+  remote ACL fidelity has separate scoped VM evidence.
+- A separate unprivileged temporary installation passed all six entry-point
+  checks. Its 68 files were byte-identical to source and its external-identifier
+  privacy scan reported zero findings.
+- Results and source hashes were retained privately. This result describes the
+  tested snapshot before this documentation-only result entry; it is not a
+  completed-review tag or final release acceptance. Repeat affected checks
+  after any final fixes and follow [release preparation](RELEASE_PREPARATION.md).
 
-Earlier staged-candidate audit checked 2026-09-20 on Linux with CPython 3.12.3:
+VM qualification follow-up checked 2026-09-24 with CPython 3.12.3:
+
+- Fixed remote restore verification to read back through the capture encoding,
+  with dry-run deletion reporting to detect missing remote children. Real-rsync
+  regressions detect missing data and changed xattrs without modifying either
+  comparison tree. Scoped privileged VM recovery and fresh round-trip evidence
+  is described in [backup fidelity](BACKUP_FIDELITY.md).
+- Fixed canary creation in a fresh operator HOME/XDG tree: prepare and probe
+  user-owned state/work roots before creating a fixture, and create mount-parent
+  directories without sudo. The initial VM attempt exposed root-owned ancestors
+  and failed to save canary state after fault construction. Refusal-before-builder
+  and fresh-ownership regressions pass. The VM retry using a newly absent XDG
+  state directory succeeded.
+- The selected candidate's complete local suite passed 836 tests, no skips, after
+  these changes. This inherited-environment run is separate from the earlier
+  file-only/fresh-HOME audit and does not replace final inventory/privacy checks.
+- Three disposable Ubuntu 24.04 guests passed installation ownership, sudoers,
+  service-login/restriction checks, all six directed peer connections, and
+  repeat-install account/key preservation. Scope and remaining first-access
+  cases are in [bootstrap qualification](BOOTSTRAP.md).
+- Three shipped canary builders completed on the replica-3 VM volume: native
+  pending metadata, file access ACL with the mismatch online, and directory
+  default ACL. Independent heal snapshots then showed zero pending entries;
+  installed repair previews passed 38/38 readiness checks and planned no writes.
+  These are native-heal-first/smoke and setup/discovery checks, not repair-apply
+  proof. The lab was retained powered off; reboot/cleanup qualification is pending.
+
+Earlier checkpoints follow; their remaining-work statements describe those
+snapshots, not the later scoped VM results above.
+
+Current selected-tree regression checked 2026-09-20 with CPython 3.12.3:
+
+- `gluster-tests --root <staged repair candidate> all -t 900 -a 120` completed
+  successfully: 833 tests passed. The helper records and displays the selected
+  root so a candidate cannot silently run the canonical checkout instead.
+- This confirms the current candidate's offline test count. It is not a fresh
+  file-only copy, deployed-host qualification, or live repair acceptance.
+
+Current in-place inventory checked 2026-09-21:
+
+- The 157-file `FILES.txt` inventory matches the working candidate after
+  normalization, with no public-tree symlinks. It contains 113 Python files and
+  123 Python/shell source and test files; every source/test file has the
+  selected copyright notice and GPL-2.0-only SPDX identifier.
+- This is an in-place source-list and notice check. Repeat the privacy scan,
+  local-link check, file-only copy, installed-tree check and clean-host work
+  against the final frozen inventory before release acceptance.
+
+Current file-only candidate audit checked 2026-09-24 with CPython 3.12.3:
+
+- The first temporary audit's completion output was not retained, so its
+  cleanup alone could not establish success. A repeat retained the actual
+  process exit, test log, result JSON and per-file source hashes outside this
+  repository. The results below refer to that repeat; documentation changes
+  recording these results followed the captured source snapshot.
+- A fresh temporary tree copied only the current 157 `FILES.txt` entries, with
+  no Git metadata or generated bytecode. It used a fresh HOME/XDG state and no
+  inherited Python, Gluster, XDG or sudo overrides. It ran under UID 1000.
+- The three documented source entry-point help commands, 93 local Markdown
+  links and all 123 Python/shell source-test notices passed in that copy.
+  The test runner exited 0: 833 tests ran in 25.364 seconds, with one skipped
+  (`OK (skipped=1)`). No live Gluster qualification follows from this result.
+- The local installer then created the expected 68 runtime files in a separate
+  temporary destination. Every installed entry point and package module was
+  byte-identical to the staged source, and its installed-tree verifier passed.
+- The companion's bounded privacy auditor scanned this candidate with the
+  external private identifier list and selected public maintainer credit; it
+  reported zero findings without printing the private patterns.
+- This rechecks the present staged tree. Repeat it after the final source list
+  is frozen, then separately complete installed-host and clean-host acceptance.
+
+## Historical staged notes and remaining requalification
+
+The records below were retained from earlier staging work. They remain useful
+for locating the intended tests, provenance, and known limitations. Repeat the
+fresh-copy and host-specific checks before release acceptance.
+
+Earlier 153-file staged-candidate audit checked 2026-09-20 on Linux with CPython 3.12.3:
 
 - The 153-file inventory exactly matches the candidate tree, with no listed
   symlinks. All 111 Python sources parse and 84 local Markdown links resolve.
@@ -37,11 +106,11 @@ Earlier staged-candidate audit checked 2026-09-20 on Linux with CPython 3.12.3:
 - The real local installer produced 67 files, each byte-identical to its source
   in the clean copy. Manager, core CLI and worker help succeeded from the
   installed tree outside the checkout. This is local packaging proof only.
-- All 121 Python/shell source and test files have a GPL-2.0-only SPDX notice;
-  ten missing notices were added. COPYING contains the GPL v2 text. A source
-  search found no embedded third-party URL, copyright or adaptation header.
-  This is an inventory check, not a determination of authorship or rights for
-  any external contribution. The companion's license remains a separate gate.
+- All 123 Python/shell source and test files carry the selected copyright
+  holder's notice and a GPL-2.0-only SPDX identifier. COPYING contains the GPL
+  v2 text. A source search found no embedded third-party URL, copyright or
+  adaptation header. This is an inventory check, not a determination of
+  authorship or rights for any external contribution.
 - The external private-identifier scan found zero matches. Local Git history
   has two commits, both using the owner-selected public name and address.
   Archived trees and messages for both commits also passed that scan. No

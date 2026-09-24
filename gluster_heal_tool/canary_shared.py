@@ -1,3 +1,4 @@
+# Copyright 2026 Matthew Joyner
 # SPDX-License-Identifier: GPL-2.0-only
 """Shared helper surface for batched gtest canaries."""
 from __future__ import annotations
@@ -6,11 +7,13 @@ import json
 import os
 import shlex
 import subprocess
+import tempfile
 import uuid
 from pathlib import Path
 from typing import Any
 
 from .install_paths import DEFAULT_SERVICE_USER
+from .controller_paths import default_work_root
 from .install_paths import DEFAULT_WORKER_PATH
 from .protocol import CanaryBatchRequest
 from .remote_ops import ssh_remote_command
@@ -175,6 +178,15 @@ def _state_root() -> Path:
 
 def _state_path(volume: str, scenario: str) -> Path:
     return _state_root() / volume / f"{scenario}.json"
+
+
+def prepare_canary_workspace() -> None:
+    """Create and check operator-owned roots before any privileged mutation."""
+    for root in (_state_root(), default_work_root()):
+        root.mkdir(parents=True, exist_ok=True, mode=0o700)
+        # A real write probe also catches an existing unwritable directory.
+        with tempfile.TemporaryFile(dir=root):
+            pass
 
 
 def _write_state(volume: str, scenario: str, payload: dict[str, Any]) -> None:

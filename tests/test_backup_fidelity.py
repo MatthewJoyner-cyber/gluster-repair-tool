@@ -1,3 +1,4 @@
+# Copyright 2026 Matthew Joyner
 # SPDX-License-Identifier: GPL-2.0-only
 """Real local transfer/archive/restore fidelity, with synthetic host transport."""
 import json
@@ -19,6 +20,46 @@ from tests.test_backup_maintenance import _result_with_artifacts
 
 
 class BackupFidelityTests(unittest.TestCase):
+
+    @unittest.skipUnless(shutil.which("rsync"), "rsync is required for read-back proof")
+    def test_readback_detects_missing_children_and_changed_xattrs_without_writes(self):
+        from gluster_heal_tool import backup_fidelity as fidelity
+        for damage in ("missing-child", "changed-xattr"):
+            with self.subTest(damage=damage), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                server = root / "server"
+                tree = server / "fixture/tree"
+                self.make_tree(tree)
+                shell = root / "transport.py"
+                shell.write_text(
+                    "import os,sys\n"
+                    "args=sys.argv[sys.argv.index('--server'):]\n"
+                    "assert args[-1]=='/'\n"
+                    f"args[-1]={str(server) + '/'!r}\n"
+                    f"os.execv({shutil.which('rsync')!r},['rsync',*args])\n"
+                )
+                actual_run = subprocess.run
+                def transport(command, **kwargs):
+                    args = list(command)
+                    args[args.index("-e") + 1] = shlex.join([sys.executable, str(shell)])
+                    args[args.index("--rsync-path") + 1] = "rsync"
+                    return actual_run(args, **kwargs)
+                artifact = BackupArtifact("host-a", "/source/tree", "/fixture/tree", "backend")
+                stage = root / "stage"
+                with patch("gluster_heal_tool.backup_fidelity.subprocess.run", side_effect=transport):
+                    fidelity.stage_remote_group([artifact], stage)
+                    if damage == "missing-child":
+                        (tree / "payload").unlink()
+                    else:
+                        os.setxattr(tree / "payload", "user.fixture", b"changed")
+                    remote_before = snapshot([(tree, "tree")])
+                    staged_before = snapshot([(stage / "host-a/fixture/tree", "tree")])
+                    with self.assertRaisesRegex(ValueError, "verification failed"):
+                        fidelity.verify_remote_group("host-a", ["/fixture/tree"], stage)
+                    self.assertEqual(remote_before, snapshot([(tree, "tree")]))
+                    self.assertEqual(staged_before, snapshot([(stage / "host-a/fixture/tree", "tree")]))
+
+
     def make_tree(self, root):
         root.mkdir(parents=True)
         file = root / "payload"

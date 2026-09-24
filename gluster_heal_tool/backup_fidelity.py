@@ -1,3 +1,4 @@
+# Copyright 2026 Matthew Joyner
 # SPDX-License-Identifier: GPL-2.0-only
 """Backup capture and verification contracts, independent of repair policy."""
 from __future__ import annotations
@@ -117,6 +118,10 @@ def transfer_group_command(host, paths, stage_root, list_path, *, push=False, ve
     command[2:2] = [*TRANSFER_FLAGS, "-r", "--relative", "--no-implied-dirs", "--from0", "--files-from", str(list_path)]
     if verify:
         command[2:2] = ["--dry-run", "--checksum", "--itemize-changes", "--modify-window=-1"]
+        if not push:
+            # A read-back comparison must also report staged children missing
+            # remotely. Dry-run makes deletion reporting non-mutating.
+            command.insert(2, "--delete")
     return command
 
 

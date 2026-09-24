@@ -1,3 +1,4 @@
+# Copyright 2026 Matthew Joyner
 # SPDX-License-Identifier: GPL-2.0-only
 """Verify archive fidelity before cleanup and after scoped restoration."""
 from __future__ import annotations
@@ -140,7 +141,12 @@ def restore_verified_archive(archive, manifest, report, *, restore_root, cleanup
                         operation["command"] = command
                 try:
                     fidelity.run_transfer(command)
-                    fidelity.verify_remote_group(host, paths, stage, push=True)
+                    # Compare through the same privileged-to-fake-super
+                    # encoding used for capture. A push dry-run can report
+                    # spurious xattr differences between encoded and real
+                    # privileged attributes. Read-back also checks missing
+                    # remote children through dry-run deletion reporting.
+                    fidelity.verify_remote_group(host, paths, stage)
                 except (OSError, ValueError) as exc:
                     raise ValueError(f"remote restore failed for {host}:{paths[0]}: {exc}") from exc
                 count = sum(any(backups._member_belongs_to_artifact(name,a["member"]) for a in group) for name in expected)

@@ -1,3 +1,4 @@
+# Copyright 2026 Matthew Joyner
 # SPDX-License-Identifier: GPL-2.0-only
 """Helpers for loading planner payloads into model objects."""
 from __future__ import annotations

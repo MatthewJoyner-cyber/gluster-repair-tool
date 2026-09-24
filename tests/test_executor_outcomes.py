@@ -1,3 +1,4 @@
+# Copyright 2026 Matthew Joyner
 # SPDX-License-Identifier: GPL-2.0-only
 """Command failures must never grant authority for subsequent destructive work."""
 import subprocess

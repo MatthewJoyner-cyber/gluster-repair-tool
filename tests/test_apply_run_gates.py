@@ -1,3 +1,4 @@
+# Copyright 2026 Matthew Joyner
 # SPDX-License-Identifier: GPL-2.0-only
 """Exercise public execution gates with real artifacts and mocked cluster I/O."""
 from __future__ import annotations

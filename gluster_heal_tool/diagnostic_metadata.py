@@ -1,3 +1,4 @@
+# Copyright 2026 Matthew Joyner
 # SPDX-License-Identifier: GPL-2.0-only
 """Versioned, lossy diagnostic projections. Never copy arbitrary evidence text.
 

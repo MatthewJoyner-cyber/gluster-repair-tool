@@ -1,3 +1,4 @@
+# Copyright 2026 Matthew Joyner
 # SPDX-License-Identifier: GPL-2.0-only
 """Batched gtest canary manager helpers."""
 from __future__ import annotations
@@ -70,6 +71,7 @@ from .canary_file import _ensure_canary_mount
 from .canary_file import _mountpoint_is_active
 from .canary_file import _unmount_canary_mount
 from .canary_shared import _brick_hosts_and_paths
+from .canary_shared import prepare_canary_workspace
 from .canary_shared import _require_successful_worker_response
 from .canary_file_observation import observe_file_state_canary
 from .volume import set_heal_settings
@@ -2295,6 +2297,8 @@ def main(argv: list[str] | None = None) -> int:
     _require_not_root()
     args = build_parser().parse_args(argv)
     scenario = getattr(args, "name", None) or _default_scenario_name()
+    if args.cmd.startswith("create"):
+        prepare_canary_workspace()
     if args.cmd == "create":
         create_entry_heal_canary(volume=args.volume, scenario=scenario, dir_name=args.dir, file_name=args.file)
         return 0

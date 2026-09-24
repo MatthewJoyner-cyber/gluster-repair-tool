@@ -1,3 +1,4 @@
+# Copyright 2026 Matthew Joyner
 # SPDX-License-Identifier: GPL-2.0-only
 """Exercise exports through real artifact writers and hostile saved evidence."""
 from __future__ import annotations

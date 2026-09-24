@@ -1,3 +1,4 @@
+# Copyright 2026 Matthew Joyner
 # SPDX-License-Identifier: GPL-2.0-only
 """Tests for bounded Stage 2 simple-mode evidence assistants."""
 from __future__ import annotations

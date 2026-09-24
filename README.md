@@ -1,10 +1,12 @@
 # Gluster Repair Tool
 
 GlusterFS evidence collection, repair planning, and guided recovery tooling.
-Version: `0.1.0` beta. License: [GPL-2.0-only](COPYING).
+Version: `0.1.0` beta. Copyright holder: see
+[MAINTAINERS.md](MAINTAINERS.md). License: [GPL-2.0-only](COPYING).
 
-**Pre-release: installed-host/live qualification and other review findings
-remain open.** Use this tree for development, offline analysis, and
+**Pre-release: live repair qualification and other review findings remain
+open.** Scoped Ubuntu installation and backup checks have passed; use this
+tree for development, offline analysis, and
 explicitly scoped disposable testing. See the [open review](steering/PRE_EXPORT_REVIEW.md)
 before considering repair writes.
 
@@ -49,13 +51,15 @@ operation's help and host requirements before deployment.
 Bootstrap preserves the Python package layout and checks all installed entry
 points. Local tests cover fresh installation, repeated upgrades and preflight
 without key creation or staging. Only the default service account and install
-paths are supported; installed-host qualification remains open. See the
+paths are supported. Fresh installation, service restrictions, peer SSH and
+repeat installation passed on three disposable Ubuntu 24.04 guests; additional
+platforms and failure/reboot coverage remain open. See the
 [bootstrap contract](docs/BOOTSTRAP.md) for commands and limits.
 The separate update script's [dry-run and preflight contract](docs/DEPLOY_PREVIEW.md)
 keeps previews read-only; its remote deployment still needs host qualification.
 Controller and deployed helper versions must agree; see the
 [host-helper contract](docs/HOST_HELPER_CONTRACT.md) for supported metadata
-commands and remaining privileged qualification.
+commands and the limits of the scoped privileged qualification.
 
 ## Evidence and planning
 
@@ -103,10 +107,13 @@ repositories. See [the private/public boundary](docs/PRIVACY.md).
 
 ## Development and release
 
+- [Release preparation](docs/RELEASE_PREPARATION.md): local readiness and final
+  pre-push gates. Planned repository destinations are in [MAINTAINERS.md](MAINTAINERS.md).
 - [Current TODO](steering/TODO.md): unresolved implementation and release work.
 - [Implementation history](HISTORY.md): frozen prehistory and discoveries.
 - [Validation](docs/VALIDATION.md): checks for this migration candidate.
 - [Migration guide](MIGRATION.md): two independent repositories and private state.
+- [Source provenance](PROVENANCE.md): public ownership and contribution record.
 - [Safety invariants](steering/SAFETY_INVARIANTS.md): required repair contracts.
 - [Architecture](docs/ARCHITECTURE.md): module ownership and tool boundaries.
 - [Test plan](steering/TEST_PLAN.md): synthetic and live proof requirements.

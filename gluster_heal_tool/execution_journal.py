@@ -1,3 +1,4 @@
+# Copyright 2026 Matthew Joyner
 # SPDX-License-Identifier: GPL-2.0-only
 """Immutable, fsynced execution events and exclusive run ownership."""
 from __future__ import annotations

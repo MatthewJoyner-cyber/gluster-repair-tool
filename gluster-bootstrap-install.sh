@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Copyright 2026 Matthew Joyner
 # SPDX-License-Identifier: GPL-2.0-only
 # Sourced by bootstrap and installation tests; no work is done at source time.
 

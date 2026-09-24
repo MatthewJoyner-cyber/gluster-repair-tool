@@ -1,3 +1,4 @@
+# Copyright 2026 Matthew Joyner
 # SPDX-License-Identifier: GPL-2.0-only
 """File-family canary builders for batched gtest scenarios."""
 from __future__ import annotations
@@ -145,6 +146,9 @@ def _mountpoint_is_active(path: str) -> bool:
 
 
 def _ensure_canary_mount(volume: str, mount_root: str, *, acl_mount: bool = False) -> None:
+    # sudo mkdir must not create root-owned ancestors inside the operator's
+    # fresh HOME/XDG state tree. Only the mount leaf needs privileged handling.
+    Path(mount_root).parent.mkdir(parents=True, exist_ok=True)
     _local_mount_dir(mount_root)
     if _mountpoint_is_active(mount_root):
         if acl_mount and not _mountpoint_supports_acl(mount_root):

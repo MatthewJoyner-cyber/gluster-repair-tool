@@ -4,11 +4,13 @@ COPYING
 HISTORY.md
 MAINTAINERS.md
 MIGRATION.md
+PROVENANCE.md
 README.md
 docs/ARCHITECTURE.md
 docs/BOOTSTRAP.md
 docs/CANARY_SOURCE_CHOICE.md
 docs/DEPLOY_PREVIEW.md
+docs/DIAGNOSTIC_COLLECTION_QUALIFICATION.md
 docs/EXECUTION_BINDING.md
 docs/BACKUP_FIDELITY.md
 docs/EXECUTION_DEPENDENCIES.md
@@ -153,3 +155,4 @@ tests/test_support_evidence.py
 tests/test_temp_mount.py
 tests/test_volume.py
 FILES.txt
+docs/RELEASE_PREPARATION.md

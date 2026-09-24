@@ -1,6 +1,20 @@
 # Maintainer credit and public contact
 
-No maintainer profile has yet been supplied for publication.
+## Selected public credit
+
+- Display name: Matthew Joyner
+- Role: Copyright holder and maintainer
+
+No public support contact has been selected.
+
+## Planned project repositories
+
+Owner-approved destinations, not yet published:
+
+- Core: `MatthewJoyner-cyber/gluster-repair-tool` on GitHub.
+- Companion: `MatthewJoyner-cyber/gluster-repair-agent` on GitHub.
+
+These project destinations do not establish an active support channel.
 
 Maintainers choose the identity and contact details they publish. An alias is
 welcome; a legal name, personal email, location, employer, or personal account

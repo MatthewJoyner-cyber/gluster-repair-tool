@@ -1,3 +1,4 @@
+# Copyright 2026 Matthew Joyner
 # SPDX-License-Identifier: GPL-2.0-only
 """Execution must retain the origin of its evidence, including on CLI bypasses."""
 from __future__ import annotations
