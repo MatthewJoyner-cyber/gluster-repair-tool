@@ -156,3 +156,6 @@ tests/test_temp_mount.py
 tests/test_volume.py
 FILES.txt
 docs/RELEASE_PREPARATION.md
+docs/CANARY_CASES.md
+gluster_heal_tool/execution_freshness.py
+tests/test_execution_freshness.py

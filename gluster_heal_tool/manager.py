@@ -534,8 +534,15 @@ def _resolve_entries_via_workers(
     split_brain_gfids: set[str] | None = None,
     split_brain_evidence_error: str = "",
 ) -> dict[str, object]:
+    volume_id = ""
     if brick_role_evidence_required and brick_roles_by_host is None:
-        brick_roles_by_host, brick_role_evidence_error = _load_brick_role_evidence(volume)
+        try:
+            from .apply_binding import volume_identity, BindingError
+            volume_info = get_volume_info(volume)
+            brick_roles_by_host = parse_brick_roles(volume_info)
+            volume_id = volume_identity(volume_info)
+        except (RuntimeError, BindingError) as exc:
+            brick_role_evidence_error = str(exc)
     progress = ProgressLog(log_path)
     unique_entries = _unique_raw_entries(heal_entries)
     progress.log(
@@ -610,7 +617,7 @@ def _resolve_entries_via_workers(
     if split_brain_gfids is not None or split_brain_evidence_error:
         _annotate_live_split_brain(manifest, split_brain_gfids or set(), split_brain_evidence_error)
     write_manifest(
-        manifest_out, manifest, volume=volume,
+        manifest_out, manifest, volume=volume, volume_id=volume_id,
         bricks=[{"host": host, "path": request.brick_path,
                  "role": (brick_roles_by_host or {}).get(host, "")}
                 for _idx, host, request in host_jobs],

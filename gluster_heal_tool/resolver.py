@@ -188,6 +188,9 @@ def _acl_hex(target, name):
 
 if lexists:
     st = os.lstat(path)
+    payload['mtime_ns'] = st.st_mtime_ns
+    payload['ctime_ns'] = st.st_ctime_ns
+    payload['inode'] = st.st_ino
     payload["kind"] = _kind(st.st_mode)
     payload["mtime"] = int(st.st_mtime)
     payload["size"] = int(st.st_size)
@@ -307,6 +310,9 @@ class LiveResolver:
                 obs.backend_size = payload.get("size")
                 obs.backend_mode = payload.get("mode", "")
                 obs.backend_mode_bits = payload.get("mode_bits")
+                obs.backend_mtime_ns = payload.get("mtime_ns")
+                obs.backend_ctime_ns = payload.get("ctime_ns")
+                obs.backend_inode = payload.get("inode")
                 obs.backend_uid = payload.get("uid")
                 obs.backend_gid = payload.get("gid")
                 obs.backend_acl_access_text = str(payload.get("acl_access") or obs.backend_acl_access_text)

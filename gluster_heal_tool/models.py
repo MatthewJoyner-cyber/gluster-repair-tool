@@ -65,6 +65,9 @@ class ResolutionObservation:
     backend_lexists: bool = False
     backend_exists: bool = False
     backend_mtime: int | None = None
+    backend_mtime_ns: int | None = None
+    backend_ctime_ns: int | None = None
+    backend_inode: int | None = None
     backend_size: int | None = None
     backend_mode: str = ""
     backend_mode_bits: int | None = None

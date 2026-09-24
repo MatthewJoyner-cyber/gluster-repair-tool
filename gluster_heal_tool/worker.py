@@ -237,6 +237,8 @@ def _inspect_backend_path(path: str) -> dict[str, object]:
             "size": int(st.st_size),
             "mtime": int(st.st_mtime),
             "ctime": int(st.st_ctime),
+            "mtime_ns": st.st_mtime_ns,
+            "ctime_ns": st.st_ctime_ns,
             "readlink": os.readlink(path) if kind == "symlink" else "",
             "trusted_gfid": _trusted_gfid(path),
             "gfid2path_xattr": gfid2path_name,
@@ -380,6 +382,9 @@ def _resolve_one(request: ResolveBatchRequest, raw_entry: str) -> ResolutionObse
         obs.backend_is_symlink = kind == "symlink"
         obs.backend_readlink = readlink
         backend_info = _inspect_backend_path(obs.backend)
+        obs.backend_mtime_ns = backend_info.get("mtime_ns")
+        obs.backend_ctime_ns = backend_info.get("ctime_ns")
+        obs.backend_inode = backend_info.get("inode")
         obs.backend_mode_bits = backend_info.get("mode_bits")
         obs.backend_uid = backend_info.get("uid")
         obs.backend_gid = backend_info.get("gid")

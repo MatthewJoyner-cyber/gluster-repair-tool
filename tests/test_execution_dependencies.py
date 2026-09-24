@@ -168,6 +168,9 @@ class ExecutionDependencyTests(unittest.TestCase):
                     apply_path.write_text(json.dumps(payload))
                     status_path.write_text(json.dumps({"volume": "gtest"}))
                     with (
+                        # This test isolates dependency outcomes after admission;
+                        # freshness refusal is exercised by the gate tests.
+                        patch('gluster_heal_tool.execution_freshness.validate_live_evidence'),
                         patch.object(cli, "get_volume_info", return_value=_BOUND_VOLUME_INFO),
                         patch.object(cli, "get_heal_settings", return_value={}),
                         patch.object(cli, "_refresh_post_execute_heal_preserving_settings") as heal,

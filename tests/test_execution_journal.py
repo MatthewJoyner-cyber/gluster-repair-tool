@@ -140,6 +140,8 @@ with patch('gluster_heal_tool.executor._execute_step', side_effect=lambda step: 
             args = ["apply-run", "--execute", "--batch", "--skip-health-check", "--allow-heal-on",
                     "--apply-in", str(apply_path), "--status-file", str(status_path)]
             with (patch.object(cli, "get_volume_info", return_value=_BOUND_VOLUME_INFO),
+                  # Isolate journal faults after successful evidence admission.
+                  patch('gluster_heal_tool.execution_freshness.validate_live_evidence'),
                   patch.object(cli, "get_heal_settings", return_value={}),
                   patch.object(cli, "_refresh_post_execute_heal_preserving_settings") as heal,
                   patch.object(cli, "manage_backup_artifacts") as backups,

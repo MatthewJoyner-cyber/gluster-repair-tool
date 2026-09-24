@@ -59,7 +59,7 @@ from .manager import (
 from .repair_matrix import render_repair_matrix, render_repair_matrix_json
 from .apply_reporting import needs_acl_temp_mount
 from .manifest import build_manifest, load_manifest, write_manifest
-from .apply_binding import BindingError, validate_apply_binding, validate_live_topology, validate_plan_context
+from .apply_binding import BindingError, validate_apply_binding, validate_live_topology, validate_plan_context, volume_identity
 from .execution_journal import ExecutionJournalError, check_run_reusable
 from .directory_tie import (
     build_directory_tie_decisions,
@@ -996,12 +996,15 @@ def main(argv: list[str] | None = None) -> int:
                 verbose=args.verbose,
             )
         brick_roles_by_host = {}
+        volume_id = ""
         brick_role_evidence_error = ""
         brick_role_evidence_required = bool(heal_entries)
         if brick_role_evidence_required:
             try:
-                brick_roles_by_host = parse_brick_roles(get_volume_info(args.volume))
-            except RuntimeError as exc:
+                volume_info = get_volume_info(args.volume)
+                brick_roles_by_host = parse_brick_roles(volume_info)
+                volume_id = volume_identity(volume_info)
+            except (RuntimeError, BindingError) as exc:
                 brick_role_evidence_error = str(exc)
         manifest, observations = build_manifest(
             heal_entries,
@@ -1013,6 +1016,7 @@ def main(argv: list[str] | None = None) -> int:
         write_manifest(
             # Bare observation caches have no independently recorded volume origin.
             args.manifest_out, manifest, volume="" if args.observations_in else args.volume,
+            volume_id=volume_id,
             bricks=[{"host": host, "path": brick_paths.get(host, brick_path),
                      "role": brick_roles_by_host.get(host, "")} for host in resolved_hosts],
         )
@@ -1530,6 +1534,13 @@ def main(argv: list[str] | None = None) -> int:
             valid, errors = validate_execute_results(results)
             if not valid:
                 print(json.dumps({"execution_ready": False, "errors": errors}, indent=2), file=sys.stderr)
+                return 2
+            try:
+                from .execution_freshness import validate_live_evidence
+                validate_live_evidence(apply_payload, results,
+                                       ssh_user=str(current_status.get('ssh_user') or DEFAULT_SERVICE_USER))
+            except (ValueError, RuntimeError, OSError) as exc:
+                print(f"ERROR: pre-execution evidence check failed: {exc}", file=sys.stderr)
                 return 2
             execution_fingerprint = hashlib.sha256(json.dumps(apply_payload, sort_keys=True).encode()).hexdigest()
             run_dir = Path(args.run_dir).expanduser() if args.run_dir else default_repair_run_dir(bound_volume, uuid.uuid4().hex[:8])

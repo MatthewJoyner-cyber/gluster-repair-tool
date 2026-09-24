@@ -117,6 +117,7 @@ repositories. See [the private/public boundary](docs/PRIVACY.md).
 - [Safety invariants](steering/SAFETY_INVARIANTS.md): required repair contracts.
 - [Architecture](docs/ARCHITECTURE.md): module ownership and tool boundaries.
 - [Test plan](steering/TEST_PLAN.md): synthetic and live proof requirements.
+- [Canary cases](docs/CANARY_CASES.md): public reports, tested families and proof limits.
 
 The legacy canary CLI has built-in sample volume names. Always pass the
 intended disposable `--volume` explicitly; no name proves a volume is safe.

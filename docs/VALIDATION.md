@@ -1,5 +1,43 @@
 # Migration candidate validation
 
+## Additional scoped qualification (2026-09-24)
+
+The core suite passed 843 tests after adding volume UUID binding and precise
+backend identity checks. The installed tool in the three-guest Ubuntu lab
+accepted unchanged evidence, refused a same-size file change with preserved
+mtime, and refused a recreated volume with identical name/brick endpoints but
+a new UUID. These are bounded admission checks, not concurrency locks.
+
+A shipped missing-file-replica canary stayed present with healing disabled.
+Independent backend discovery found two agreeing copies and one missing copy,
+then the reviewed public apply command completed one restore action. Independent
+brick checks confirmed the same GFID, size, mode, ownership and content digest
+on all three replicas. The fixture was an empty synthetic file: this qualifies
+that mechanical operator path, not nonempty payload fidelity or protocol
+split-brain recovery. Baseline healing was restored and pending counts were zero.
+
+Sequential reboots exposed a lab name-resolution defect missed by a quiet heal
+report. After correcting persistent mappings, all three reboots passed fresh
+boot/service checks, every guest's name mappings and management peers, quiet
+brick heal before the next reboot, and all six directed service logins.
+The temporary client mount was restored separately afterwards; automatic client
+mount persistence was not tested. Original failures and reruns remain private.
+
+Ten saved artifacts from the controlled workflow exported through the
+metadata-only collector, with zero matches for the supplied private identifiers
+and no raw-source or identifier-file copies. Offline/disconnected, arbiter and
+AFR collection coverage remain separate qualification work. Nothing was sent.
+
+The final 161-file copy with fresh HOME/XDG passed 119 local links, source
+notices, entry-point help and 843 tests (one temporary-filesystem ACL skip).
+The normal workspace suite passed all 843 tests without skips. The updated
+temporary install had 69 byte-identical files and no privacy-scan findings.
+The companion's 45-file inventory, 26 tests, 50 local links and updated
+VM skill validation passed. These checks do not close the remaining diagnostic
+coverage, installation fault matrix or final remediation review.
+
+## Earlier preparation snapshot
+
 Local repository preparation rechecked 2026-09-24 after the VM fixes:
 
 - The public inventory now contains 158 files, including the release preparation

@@ -12,6 +12,7 @@ import unittest
 from unittest.mock import Mock, patch
 
 from gluster_heal_tool import cli
+from gluster_heal_tool.apply_binding import BindingError
 from gluster_heal_tool.models import ApplyActionResult
 from tests.test_reversibility_gate import _bind_test_payload, _BOUND_VOLUME_INFO, _load_manager_module
 
@@ -84,6 +85,11 @@ class ApplyRunGateTests(unittest.TestCase):
             restorer = Mock(side_effect=restore)
             verification = Mock(return_value={"available": True, "summary": {"paths_ok": 1}})
             with ExitStack() as stack:
+                if gate == "freshness":
+                    stack.enter_context(patch(
+                        "gluster_heal_tool.execution_freshness.validate_live_evidence",
+                        side_effect=BindingError("live evidence changed"),
+                    ))
                 # Also guard the old manager boundary so this test can reproduce
                 # the regression without allowing a real command to escape.
                 for module in (cli, self.manager):
@@ -107,7 +113,7 @@ class ApplyRunGateTests(unittest.TestCase):
     def test_refused_public_forms_never_execute_or_change_heal(self):
         for entry in (cli, self.manager):
             for flags in ((), ("--execute-ready",), ("--require-snapshot", "--snapshot-ack")):
-                for gate in ("controller", "artifact-controller", "health", "authorization", "invalid-action"):
+                for gate in ("controller", "artifact-controller", "health", "authorization", "invalid-action", "freshness"):
                     with self.subTest(entry=entry.__name__, flags=flags, gate=gate):
                         code, executor, setter, restorer, refresh, *_ = self.run_case(entry, flags, gate=gate, managed=True)
                         self.assertEqual(2, code)
@@ -115,7 +121,7 @@ class ApplyRunGateTests(unittest.TestCase):
                         setter.assert_not_called()
                         restorer.assert_not_called()
                         refresh.assert_not_called()
-            for gate in ("controller", "artifact-controller", "snapshot", "health", "authorization", "invalid-action"):
+            for gate in ("controller", "artifact-controller", "snapshot", "health", "authorization", "invalid-action", "freshness"):
                 with self.subTest(entry=entry.__name__, gate=gate, form="plain"):
                     code, executor, setter, restorer, refresh, *_ = self.run_case(entry, gate=gate)
                     self.assertEqual(2, code)

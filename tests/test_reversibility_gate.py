@@ -32,12 +32,12 @@ def _load_manager_main():
     return _load_manager_module().main
 
 
-_BOUND_VOLUME_INFO = "Volume Name: gtest\nType: Replicate\nBrick1: node-a:/srv/brick\nBrick2: node-b:/srv/brick\n"
+_BOUND_VOLUME_INFO = "Volume Name: gtest\nVolume ID: 11111111-2222-4333-8444-555555555555\nType: Replicate\nBrick1: node-a:/srv/brick\nBrick2: node-b:/srv/brick\n"
 
 
 def _bind_test_payload(root: Path, payload: dict) -> None:
     manifest = {"schema_version": 1, "objects": {}}
-    bind_manifest(manifest, volume="gtest", bricks=[
+    bind_manifest(manifest, volume="gtest", volume_id='11111111-2222-4333-8444-555555555555', bricks=[
         {"host": host, "path": "/srv/brick", "role": "data"} for host in ("node-a", "node-b")
     ])
     manifest_path = root / "manifest.json"

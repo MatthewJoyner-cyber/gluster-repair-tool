@@ -226,7 +226,8 @@ def build_manifest(
 
 
 def write_manifest(path: str | Path, manifest: dict[str, ManifestObject], *,
-                   volume: str = "", bricks: list[dict] | None = None) -> None:
+                   volume: str = "", bricks: list[dict] | None = None,
+                   volume_id: str = "") -> None:
     payload = {
         "schema_version": 1,
         "objects": {
@@ -236,7 +237,7 @@ def write_manifest(path: str | Path, manifest: dict[str, ManifestObject], *,
     }
     if volume and bricks and all(item.get("role") in {"data", "arbiter"} for item in bricks):
         from .apply_binding import bind_manifest
-        bind_manifest(payload, volume=volume, bricks=bricks)
+        bind_manifest(payload, volume=volume, bricks=bricks, volume_id=volume_id)
     write_json_shared(path, payload)
 
 

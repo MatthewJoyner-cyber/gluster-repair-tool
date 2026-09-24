@@ -1,6 +1,7 @@
 # Implementation history before the repository split
 
-This is a frozen, sanitized summary of development before migration. It is not
+This is a sanitized pre-publication development summary, finalized before the
+first public push and then frozen. It is not
 a copy of the original ledger and does not import that repository's commits.
 It preserves transferable findings from implementation, synthetic tests, and
 bounded lab work. Exact inventories, incident identifiers, logs, artifacts,
@@ -124,6 +125,40 @@ candidate, but fresh-install and platform qualification remain incomplete.
 The [open review](steering/PRE_EXPORT_REVIEW.md) owns the concrete rework and
 required tests. A green unit suite, successful cleanup, or an earlier review
 tag cannot replace those missing boundary tests.
+
+## Qualification while preparing the clean repository
+
+The clean candidate added content-bound evidence lineage, shared execution
+gates, dependency failure propagation, conservative native-resolver outcomes
+and durable attempt records. These changes address the review's concrete
+failure modes; they do not make saved evidence permanently current.
+
+Fresh headless Ubuntu guests exposed defects that an existing installation
+hid. A streamed shell lost an installation step when nested SSH consumed its
+input. Independent account checks caught that false success. Explicit peer
+name resolution and connected membership were necessary before volume creation;
+a failed create could leave brick identity residue even without a listed volume.
+
+Privileged backup testing found that restore verification needed a read-back
+comparison compatible with archive capture. Recovery from the retained failed
+archive and a fresh round trip then preserved the tested metadata and hardlinks.
+Another test exposed root-owned controller state ancestors after canary setup;
+workspace write checks were moved before fixture construction.
+
+Three replica-3 metadata canaries completed and native healing cleared their
+pending work. Ready previews with no proposed writes were recorded as smoke
+evidence, not repair execution. Sequential guest reboots returned brick heal
+output to zero pending entries, but a subsequent management operation exposed
+lost peer hostname mappings. Qualification therefore also checks persistent
+name resolution and management connectivity from every guest. Remaining binding, stable
+repair and collection gates are maintained in the current TODO and validation
+records; this history does not promote them to passed tests.
+
+The source and companion were separated from private steering and operational
+ledgers. Metadata-only support exports replace raw artifact copying; unknown
+formats remain explicit omissions. Public case references and proof boundaries
+are collected in [canary cases](docs/CANARY_CASES.md), without importing raw
+forum posts, private run paths or incident identities.
 
 ## Lessons retained
 

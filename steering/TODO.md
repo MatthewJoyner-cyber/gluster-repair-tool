@@ -1,13 +1,14 @@
 # Project TODO
 
 Use [release preparation](../docs/RELEASE_PREPARATION.md) for the final pre-push
-sequence. Repository names are selected; creation and publication await authority.
+sequence. Repository names are selected; creation and publication follow acceptance.
 
 - [x] Implement R1 saved execution-origin binding and refusal tests in the
   candidate (2026-09-20). See [binding scope and limits](../docs/EXECUTION_BINDING.md).
-- [ ] Review/qualify R1 on disposable live fixtures. Same-name volume recreation
-  with identical endpoints and live object changes require additional identity
-  checks; artifact fingerprints alone do not establish current file contents.
+- [x] Add R1 volume UUID and precise backend freshness checks (2026-09-24).
+  Installed CLI refusal passed for same-name/same-endpoint volume recreation
+  and changed file data with preserved size/mtime; unchanged metadata passed.
+  Review remains part of final remediation acceptance; the check is not a lock.
 - [x] Implement R2: route every public apply-run form through the shared gates,
   validate before heal changes, preserve heal settings through refresh, and
   test refusal/interruption/restore failures (2026-09-20; local tests only).
@@ -79,7 +80,9 @@ sequence. Repository names are selected; creation and publication await authorit
   `sudo -n true` alone does not prove permission to run the installer.
   The three-VM Ubuntu 24.04 baseline, installation, service restrictions, six
   directed peer logins and idempotent reinstall passed on 2026-09-24. Complete
-  canary/reboot/failure coverage and retain the distribution-matrix limitation.
+  remaining installation failure coverage and retain the distribution-matrix
+  limitation. Strengthened three-guest sequential reboot and one independent
+  missing-replica repair passed; the latter used an empty synthetic file.
 - [x] Fix deploy-script preview/preflight side effects locally (2026-09-20):
   health refresh only after copying, no implicit key generation, read-only
   remote probes, verified host keys and early custom-layout refusal. Nine

@@ -11,6 +11,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import uuid
 from pathlib import Path
 
 from .volume import normalize_host_alias, parse_bricks, parse_brick_roles
@@ -27,6 +28,20 @@ def _fail(message: str) -> None:
 def _digest(value: object) -> str:
     return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":"),
                                      ensure_ascii=True, allow_nan=False).encode()).hexdigest()
+
+
+def volume_identity(volume_info: str) -> str:
+    values = [line.split(':', 1)[1].strip() for line in volume_info.splitlines()
+              if line.strip().startswith('Volume ID:')]
+    if len(values) != 1:
+        _fail('missing or ambiguous volume ID')
+    try:
+        identity = uuid.UUID(values[0])
+    except (ValueError, AttributeError):
+        _fail('invalid volume ID')
+    if identity.int == 0:
+        _fail('empty volume ID')
+    return str(identity)
 
 
 def _bricks(items: list[dict]) -> list[dict]:
@@ -51,7 +66,7 @@ def _fingerprint(payload: dict, binding: dict) -> str:
 
 
 def _seal(payload: dict, *, kind: str, origin: dict, sources: dict) -> None:
-    binding = {"schema_version": 1, "kind": kind, "origin": copy.deepcopy(origin),
+    binding = {"schema_version": 2, "kind": kind, "origin": copy.deepcopy(origin),
                "sources": copy.deepcopy(sources)}
     binding["fingerprint"] = _fingerprint(payload, binding)
     payload["origin_binding"] = binding
@@ -61,7 +76,7 @@ def _check(payload: dict, kind: str) -> dict:
     if not isinstance(payload, dict):
         _fail("invalid artifact payload")
     binding = payload.get("origin_binding")
-    if not isinstance(binding, dict) or binding.get("schema_version") != 1 or binding.get("kind") != kind:
+    if not isinstance(binding, dict) or binding.get("schema_version") not in (1, 2) or binding.get("kind") != kind:
         _fail("missing or unsupported binding")
     origin = binding.get("origin")
     if not isinstance(origin, dict) or not isinstance(origin.get("volume"), str) or not origin["volume"].strip():
@@ -91,11 +106,15 @@ def _read_source(reference: dict) -> dict:
     return payload
 
 
-def bind_manifest(payload: dict, *, volume: str, bricks: list[dict]) -> None:
+def bind_manifest(payload: dict, *, volume: str, bricks: list[dict], volume_id: str = "") -> None:
     """Only evidence collection supplies this origin; never recover it from status."""
     if not volume.strip():
         _fail("missing evidence volume")
-    _seal(payload, kind="evidence", origin={"volume": volume.strip(), "bricks": _bricks(bricks)}, sources={})
+    if not volume_id:
+        return  # Evidence without a volume generation remains preview-only.
+    identity = volume_identity('Volume ID: ' + volume_id)
+    _seal(payload, kind="evidence", origin={"volume": volume.strip(), "volume_id": identity,
+          "bricks": _bricks(bricks)}, sources={})
 
 
 def bind_plan(payload: dict, manifest: dict, manifest_path: str | Path) -> None:
@@ -155,6 +174,9 @@ def derive_apply_binding(payload: dict, previous: dict) -> None:
 def validate_apply_binding(payload: dict, status: dict) -> str:
     binding = _check_apply(payload)
     origin = binding["origin"]
+    if not origin.get('volume_id'):
+        _fail('missing volume ID in saved evidence')
+    volume_identity('Volume ID: ' + str(origin['volume_id']))
     if str(status.get("volume") or "").strip() != origin["volume"]:
         _fail("status volume differs from apply volume")
     for field, source in (("manifest_in", "evidence"), ("manifest_out", "evidence"), ("plan_out", "plan")):
@@ -170,6 +192,8 @@ def validate_live_topology(payload: dict, volume_info: str) -> None:
              if line.strip().startswith("Volume Name:")]
     if names != [origin["volume"]]:
         _fail("live volume identity differs from evidence")
+    if volume_identity(volume_info) != origin.get('volume_id'):
+        _fail('live volume ID differs from evidence')
     try:
         roles = parse_brick_roles(volume_info)
         live = _bricks([{"host": host, "path": path, "role": roles.get(host, "")}

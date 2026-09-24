@@ -19,10 +19,12 @@ from gluster_heal_tool.manifest import write_manifest
 from gluster_heal_tool.apply_binding import (
     BindingError, bind_manifest, bind_plan, bind_apply, derive_apply_binding,
     validate_apply_binding, validate_plan_context, validate_live_topology,
+    volume_identity,
 )
 
 
 VOLUME_INFO = """Volume Name: example
+Volume ID: 11111111-2222-4333-8444-555555555555
 Type: Replicate
 Brick1: node-a:/srv/brick
 Brick2: node-b:/srv/brick
@@ -47,7 +49,8 @@ class ApplyBindingTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         self.manifest = {"schema_version": 1, "objects": {"file": {"gfid": "identity-a"}}}
-        bind_manifest(self.manifest, volume="example", bricks=BRICKS)
+        bind_manifest(self.manifest, volume="example", bricks=BRICKS,
+                      volume_id='11111111-2222-4333-8444-555555555555')
         self.manifest_path = self.root / "manifest.json"
         self.save(self.manifest_path, self.manifest)
         self.plan = {"schema_version": 1, "actions": []}
@@ -71,6 +74,19 @@ class ApplyBindingTests(unittest.TestCase):
             validate_plan_context(self.plan, volume="other", brick_path="/srv/brick")
         with self.assertRaisesRegex(BindingError, "brick"):
             validate_plan_context(self.plan, volume="example", brick_path="/wrong/brick")
+
+    def test_recreated_volume_with_identical_name_and_bricks_is_refused(self):
+        info = VOLUME_INFO.replace('11111111-2222-4333-8444-555555555555',
+                                   'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee')
+        with self.assertRaisesRegex(BindingError, 'volume.*identity|volume.*ID'):
+            validate_live_topology(self.apply, info)
+
+    def test_missing_ambiguous_or_invalid_volume_identity_is_refused(self):
+        for info in ('Volume Name: example', 'Volume ID: invalid',
+                     'Volume ID: 00000000-0000-0000-0000-000000000000',
+                     VOLUME_INFO + '\nVolume ID: aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'):
+            with self.subTest(info=info), self.assertRaises(BindingError):
+                volume_identity(info)
 
     def test_replaced_brick_or_role_is_not_the_approved_topology(self):
         for info in (
@@ -121,7 +137,7 @@ class ApplyBindingTests(unittest.TestCase):
         manager = self.manager_module()
         for module, owner, extra_flags in ((cli, cli, []), (manager, cli, []),
                                            (manager, cli, ["--manage-heal"])):
-            for failure in ("volume", "legacy", "target", "topology"):
+            for failure in ("volume", "legacy", "target", "topology", "recreated"):
                 for skip_health in (False, True):
                     with self.subTest(entry=module.__name__, flags=extra_flags, failure=failure, skip_health=skip_health):
                         payload = copy.deepcopy(self.apply)
@@ -133,6 +149,9 @@ class ApplyBindingTests(unittest.TestCase):
                             del payload["origin_binding"]
                         elif failure == "target":
                             payload["actions"] = [{"action_id": "unexpected"}]
+                        elif failure == "recreated":
+                            info = info.replace('11111111-2222-4333-8444-555555555555',
+                                                'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee')
                         else:
                             info = info.replace("node-b", "node-c")
                         apply_path = self.root / "apply.json"
@@ -207,7 +226,8 @@ class ApplyBindingTests(unittest.TestCase):
     def test_real_build_writers_preserve_origin_and_refuse_relabel(self):
         for module in (cli, self.manager_module()):
             with self.subTest(entry=module.__name__):
-                write_manifest(self.manifest_path, {}, volume="example", bricks=BRICKS)
+                write_manifest(self.manifest_path, {}, volume="example", bricks=BRICKS,
+                               volume_id='11111111-2222-4333-8444-555555555555')
                 status_path = self.root / "status.json"
                 apply_path = self.root / "built-apply.json"
                 self.save(status_path, self.status)
