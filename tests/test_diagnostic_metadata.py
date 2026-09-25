@@ -162,6 +162,18 @@ class DiagnosticMetadataTests(unittest.TestCase):
         self.assertEqual(GFID, brick["entries"][1]["gfid"])
         self.assertEqual(1, heal["omitted_fields_or_lines"])
 
+    def test_heal_info_retains_only_explicit_connected_and_disconnected_states(self) -> None:
+        exporter = MetadataExporter()
+        result = exporter.export("heal_info", (
+            "Brick peer-a:/brick-a\nStatus: Connected\nNumber of entries: 0\n"
+            "Brick peer-b:/brick-b\nStatus: Disconnected\nNumber of entries: 0\n"
+        ))
+        first, second = result["metadata"]["bricks"]
+        self.assertIs(first["connected"], True)
+        self.assertIs(second["connected"], False)
+        self.assertNotIn("peer-a", json.dumps(result))
+        self.assertNotIn("peer-b", json.dumps(result))
+
     def test_topology_and_health_export_keep_only_parsed_operational_facts(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

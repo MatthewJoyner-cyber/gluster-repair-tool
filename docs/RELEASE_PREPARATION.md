@@ -45,8 +45,8 @@ require fixes; rerun the checks affected by those changes before publication.
   object changes: [execution binding](EXECUTION_BINDING.md).
 - Metadata-only diagnostic collection in intended operator workflows:
   [collection qualification](DIAGNOSTIC_COLLECTION_QUALIFICATION.md).
-- Stable repair-apply proof, post-volume reboot and remaining installation
-  failure cases: [bootstrap](BOOTSTRAP.md) and [test plan](../steering/TEST_PLAN.md).
+- Broader repair-apply payload coverage and cross-release/physical-host
+  qualification: [bootstrap](BOOTSTRAP.md) and [test plan](../steering/TEST_PLAN.md).
 - Supported environment claims must remain within the tested matrix:
   [portability](PORTABILITY.md).
 - Repeat file-only and installed-tree checks against the final snapshot and

@@ -13,10 +13,15 @@ Installer failure and post-repair reboot follow-up:
   restored all six directed management peer links, and reached connected
   three-brick heal status with zero entries before the next reboot. Final volume
   status showed no active volume tasks. Automated client-mount persistence,
-  other distributions and every package/sudoers fault remain untested.
+  other distributions and physical-host policy remain untested.
+- Invalid package syntax and generated sudoers were refused on the disposable
+  guests without changing installed files/ownership/modes, policy, keys or
+  remote staging. The offline brick-status and arbiter-role projections passed
+  live collection; Gluster 11.1 did not emit an explicit disconnected status
+  in `heal_info`, so that field remains unqualified.
 - The companion's documented test-discovery command passed all 26 tests; the
-  core's documented discovery command now passes all 844 tests, including a
-  focused refusal/no-copy regression for log and worker-wrapper labels.
+  core's documented discovery command now passes all 845 tests, including
+  no-copy/refusal and explicit disconnected-state projection regressions.
 
 The preceding core suite passed 843 tests after adding volume UUID binding and
 precise backend identity checks. The installed tool in the three-guest Ubuntu lab
@@ -39,21 +44,23 @@ brick heal before the next reboot, and all six directed service logins.
 The temporary client mount was restored separately afterwards; automatic client
 mount persistence was not tested. Original failures and reruns remain private.
 
-Ten saved artifacts from the controlled workflow exported through the
-metadata-only collector, with zero matches for the supplied private identifiers
-and no raw-source or identifier-file copies. AFR inspection from all three
-bricks of the canary-owned path also exported as metadata. Disconnected heal /
-offline status sections and an arbiter-volume capture remain separate
-qualification work. Nothing was sent.
+Ten saved artifacts from the controlled workflow and the three-brick AFR
+inspection exported through the metadata-only collector, with zero matches for
+the supplied private identifiers and no raw-source or identifier-file copies.
+The later live capture also exported an arbiter-volume description and one
+offline brick status row. Gluster 11.1 omitted `Status` in `heal_info` for the
+offline brick; that explicit disconnected state remains unqualified. Nothing
+was sent.
 
-The final 161-file copy with fresh HOME/XDG passed 119 local links, source
+An earlier 161-file copy with fresh HOME/XDG passed 119 local links, source
 notices, entry-point help and 843 tests (one temporary-filesystem ACL skip).
-The normal workspace suite passed all 843 tests without skips. The updated
-temporary install had 69 byte-identical files and no privacy-scan findings.
+The latest worktree inventory remains exactly 161 files with no symlinks; the
+final full workspace suite passed 845 tests. The earlier updated temporary
+install had 69 byte-identical files and no privacy-scan findings; repeat the
+file-only/install audit after the source snapshot is frozen.
 The companion's 45-file inventory, 26 tests, 50 local links and updated
-VM skill validation passed. These checks do not close remaining diagnostic
-coverage, package-validation/sudoers fault injection, or final remediation
-review.
+VM skill validation passed. These checks do not close cross-release/physical
+host qualification or final remediation review.
 
 ## Earlier preparation snapshot
 

@@ -9,12 +9,12 @@ evidence required before the diagnostic-format TODO item can be closed.
 
 | Bundle label | Bounded saved source | Current local coverage | Live qualification needed |
 | --- | --- | --- | --- |
-| `heal_info` | `gluster volume heal VOLUME info` captured without starting a crawl | Connected three-brick result exported from the disposable replica-3 volume; rows, GFIDs and split-brain flags covered by schema tests | Capture a disconnected section from a disposable volume; confirm unsupported lines are omitted. |
-| `volume_info` | `gluster volume info VOLUME` | Replica-3 layout captured from the disposable volume; parsed data/arbiter roles covered by schema tests | Capture an arbiter layout; retain no options or volume IDs. |
-| `volume_status` | `gluster volume status VOLUME` | Online brick and self-heal-daemon rows captured from the disposable volume | Capture offline rows; confirm parser behavior for the installed Gluster version. |
-| `health` | Version-1 `health-check` JSON report | Real writer projection with selected readiness fields | Save a report made against the same disposable topology and confirm messages, logs, snapshot names and raw host facts are absent. |
-| `manifest`, `observations` | Focused `repair-meta` or `evidence-build` writer output | Real writer projection and cross-artifact aliases | Save a read-only focused discovery result and inspect aliases, GFIDs, sizes and modes. |
-| `plan`, `apply`, `execute_results`, `status` | Tool writer outputs from a disposable workflow | Real writer projection and outcome relationships | Use a dry-run or controlled disposable workflow; do not rerun an unresolved repair merely to populate a bundle. |
+| `heal_info` | `gluster volume heal VOLUME info` captured without starting a crawl | Connected three-brick result exported from the disposable replica-3 volume; rows, GFIDs and explicit connected/disconnected flags covered by schema tests | Capture an explicit disconnected status section. Gluster 11.1 omitted the status field for its offline brick. |
+| `volume_info` | `gluster volume info VOLUME` | Replica-3 and replica-3-arbiter layouts captured from disposable volumes; data/arbiter roles exported | Other Gluster releases remain unqualified. |
+| `volume_status` | `gluster volume status VOLUME` | Online and one offline brick row captured and exported from the disposable replica-3 volume | Other Gluster releases remain unqualified. |
+| `health` | Version-1 `health-check` JSON report | Real report from the disposable topology exported with selected readiness fields | Other report versions remain unqualified. |
+| `manifest`, `observations` | Focused `repair-meta` or `evidence-build` writer output | Real read-only writer output projected with cross-artifact aliases | Broader workflow shapes remain unqualified. |
+| `plan`, `apply`, `execute_results`, `status` | Tool writer outputs from a disposable workflow | Real controlled-workflow outputs projected with outcome relationships | Broader action types remain unqualified; do not rerun an unresolved repair merely to populate a bundle. |
 | `afr_inspection` | Canary worker's read-only inspector result | Read-only inspector results from all three bricks for the canary-owned path; only 12-byte AFR counters retained | Other releases remain unqualified. |
 
 ## Acceptance procedure
@@ -34,12 +34,13 @@ evidence required before the diagnostic-format TODO item can be closed.
    their files. A new format needs a versioned schema, hostile-input tests and
    reviewer approval; it must never enable a raw-copy fallback.
 
-The disposable Ubuntu 24.04 lab exported ten saved workflow artifacts and the
+The disposable Ubuntu 24.04 lab exported ten saved workflow artifacts, a live
+replica-3-arbiter volume description, an offline brick status row and the
 three-brick AFR inspection with the external identifier scan passing. Unknown
 labels, including logs and worker wrappers, are rejected before artifact reads;
-recognized labels with unsupported schemas are inventoried as omitted.
-Disconnected heal/status sections and an arbiter-volume capture remain open.
-Nothing was submitted.
+recognized labels with unsupported schemas are inventoried as omitted. An
+explicit disconnected `heal_info` status remains unqualified because Gluster
+11.1 omitted that field for the offline brick. Nothing was submitted.
 
 Passing the local tests establishes only the projection contract. It does not
 qualify a particular Gluster release, prove anonymity, or authorize a repair or

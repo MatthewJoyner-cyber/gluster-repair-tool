@@ -61,11 +61,12 @@ sequence. Repository names are selected; creation and publication follow accepta
   workflows. Parsed volume-info/status and version-1 health reports export
   selected topology and readiness fields; unknown log and worker-wrapper labels
   are refused before reading, and recognized labels without a schema are
-  inventoried as omitted. Ten saved workflow artifacts and read-only AFR
-  inspection on all three bricks exported as metadata with identifier scans
-  passing. Disconnected heal/offline status sections and an arbiter-volume
-  capture remain open. Add only explicitly bounded schemas; do not reintroduce
-  raw-copy fallback. Follow the
+  inventoried as omitted. Ten saved workflow artifacts, an arbiter-volume
+  description, one offline brick status and read-only AFR inspection on all
+  three bricks exported as metadata with identifier scans passing. Gluster 11.1
+  omitted the disconnected status field in `heal_info`; qualify that format on
+  a version that emits it. Add only explicitly bounded schemas; do not
+  reintroduce raw-copy fallback. Follow the
   [diagnostic collection checklist](../docs/DIAGNOSTIC_COLLECTION_QUALIFICATION.md).
 - [x] Implement R12 evidence-build/repair-meta log forwarding on all five
   focused routes and record the path in status/report (2026-09-20; synthetic
@@ -75,19 +76,19 @@ sequence. Repository names are selected; creation and publication follow accepta
   installed help and the full offline suite (2026-09-20, Linux/Python 3.12.3).
   Fix the test expectation that froze an import-time default across an XDG
   environment change. See [portability limits](../docs/PORTABILITY.md).
-- [ ] Finish R13 release qualification on a separate clean host: service
-  account, ownership, sudoers, deployed helpers, supported interpreter and
-  distribution matrix, and scoped live acceptance. The local test is not a
-  claim of those outcomes. Follow the [fresh-account test sequence](../docs/BOOTSTRAP.md):
+- [ ] Finish R13 qualification beyond the tested Ubuntu 24.04 guests: supported
+  interpreter/distribution matrix and physical-host policy. Current live
+  evidence is limited to the three tested Ubuntu 24.04 guests. Follow the
+  [fresh-account test sequence](../docs/BOOTSTRAP.md):
   separate initial administrator access from automated bootstrap, use three
   disposable OS instances, and test real service login and every peer pair.
   `sudo -n true` alone does not prove permission to run the installer.
   The three-VM Ubuntu 24.04 baseline, installation, service restrictions, six
-  directed peer logins and idempotent reinstall passed on 2026-09-24. Complete
-  package-validation/sudoers fault injection and retain the distribution-matrix
-  limitation. Follow-up checks refused changed host trust, a locked key without
-  an agent, and second-source transfer failure without changing installed files,
-  sudoers or the service key; remote staging was cleaned. After the mechanical
+  directed peer logins and idempotent reinstall passed on 2026-09-24. The
+  changed-host, locked-key, transfer, package-validation and sudoers-validation
+  fault cases all refused safely; the distribution-matrix and physical-host
+  limitation remains. The SCP failure left installed files, sudoers and the
+  service key unchanged and cleaned remote staging. After the mechanical
   repair, all three sequential reboots recovered peer links and zero-entry heal
   status before the next reboot. One independent missing-replica repair passed;
   the latter used an empty synthetic file.

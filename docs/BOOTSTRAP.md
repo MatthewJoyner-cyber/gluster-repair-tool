@@ -91,13 +91,16 @@ transport. Preflight tests cover failed access, missing peer keys, and absence
 of key generation/staging. Actual account creation, privilege ownership,
 `visudo` parsing, service login and idempotent reinstall passed on three
 disposable Ubuntu 24.04 guests on 2026-09-24. Missing-key/trust/login/sudo
-refusals and six directed service-peer connections also passed. Remaining
-failure scenarios, other distributions and physical-host policy remain open.
+refusals and six directed service-peer connections also passed. At that
+checkpoint, additional failure scenarios, other distributions and physical-host
+policy remained open.
 Follow-up VM tests also refused a changed pinned host key, an encrypted operator
 key without an agent, and a second-source SCP failure. The SCP failure left the
 installed files, sudoers policy and service key unchanged and removed remote
-staging. Package-validation and sudoers-write/validation fault injection remain
-open; this limited result does not make bootstrap transactional.
+staging. Invalid package syntax and invalid sudoers output were also refused;
+installed files, ownership/modes, sudoers, account keys and remote staging
+remained unchanged. These cases do not make bootstrap transactional or qualify
+other distributions and physical-host policy.
 
 ### Fresh-account and bare-system test sequence
 
