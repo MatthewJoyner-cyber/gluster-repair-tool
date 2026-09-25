@@ -59,9 +59,13 @@ sequence. Repository names are selected; creation and publication follow accepta
   required. See [supported formats and limits](../docs/SUPPORT_EVIDENCE.md).
 - [ ] Qualify diagnostic format coverage against intended operator collection
   workflows. Parsed volume-info/status and version-1 health reports export
-  selected topology and readiness fields; log, worker-wrapper and remaining
-  unstructured artifacts are omitted. Add only explicitly bounded schemas;
-  do not reintroduce raw-copy fallback. Follow the
+  selected topology and readiness fields; unknown log and worker-wrapper labels
+  are refused before reading, and recognized labels without a schema are
+  inventoried as omitted. Ten saved workflow artifacts and read-only AFR
+  inspection on all three bricks exported as metadata with identifier scans
+  passing. Disconnected heal/offline status sections and an arbiter-volume
+  capture remain open. Add only explicitly bounded schemas; do not reintroduce
+  raw-copy fallback. Follow the
   [diagnostic collection checklist](../docs/DIAGNOSTIC_COLLECTION_QUALIFICATION.md).
 - [x] Implement R12 evidence-build/repair-meta log forwarding on all five
   focused routes and record the path in status/report (2026-09-20; synthetic
@@ -80,9 +84,13 @@ sequence. Repository names are selected; creation and publication follow accepta
   `sudo -n true` alone does not prove permission to run the installer.
   The three-VM Ubuntu 24.04 baseline, installation, service restrictions, six
   directed peer logins and idempotent reinstall passed on 2026-09-24. Complete
-  remaining installation failure coverage and retain the distribution-matrix
-  limitation. Strengthened three-guest sequential reboot and one independent
-  missing-replica repair passed; the latter used an empty synthetic file.
+  package-validation/sudoers fault injection and retain the distribution-matrix
+  limitation. Follow-up checks refused changed host trust, a locked key without
+  an agent, and second-source transfer failure without changing installed files,
+  sudoers or the service key; remote staging was cleaned. After the mechanical
+  repair, all three sequential reboots recovered peer links and zero-entry heal
+  status before the next reboot. One independent missing-replica repair passed;
+  the latter used an empty synthetic file.
 - [x] Fix deploy-script preview/preflight side effects locally (2026-09-20):
   health refresh only after copying, no implicit key generation, read-only
   remote probes, verified host keys and early custom-layout refusal. Nine

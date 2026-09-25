@@ -93,6 +93,11 @@ of key generation/staging. Actual account creation, privilege ownership,
 disposable Ubuntu 24.04 guests on 2026-09-24. Missing-key/trust/login/sudo
 refusals and six directed service-peer connections also passed. Remaining
 failure scenarios, other distributions and physical-host policy remain open.
+Follow-up VM tests also refused a changed pinned host key, an encrypted operator
+key without an agent, and a second-source SCP failure. The SCP failure left the
+installed files, sudoers policy and service key unchanged and removed remote
+staging. Package-validation and sudoers-write/validation fault injection remain
+open; this limited result does not make bootstrap transactional.
 
 ### Fresh-account and bare-system test sequence
 

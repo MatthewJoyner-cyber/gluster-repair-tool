@@ -94,12 +94,14 @@ values and values with unexpected types are omitted too. The omission count
 counts excluded fields/values or heal lines, not bytes or all descendants of
 an excluded container. Unsupported writer schema versions are not exported.
 
-`brick_roles`, `resolver_record`, `decisions`, `summary`, `assistants`, and
-unrecognized wrappers currently have
-no exporter. They appear as `omitted_unsupported_format`, with no raw copy.
-Missing files appear as `missing`. Exported files appear as `exported_metadata`
-with their JSON filename and SHA-256 hash of the exported bytes. Inspect the
-inventory before assuming that a selected artifact supplied evidence.
+`brick_roles`, `resolver_record`, `decisions`, `summary`, and `assistants` are
+recognized labels without a schema exporter; their inventory status is
+`omitted_unsupported_format`, with no raw copy. Unknown labels, including logs
+and worker wrappers, are rejected before any artifact is read. Missing files
+under recognized labels appear as `missing`. Exported files appear as
+`exported_metadata` with their JSON filename and SHA-256 hash of the exported
+bytes. Inspect the inventory before assuming that a selected artifact supplied
+evidence.
 
 The builder refuses explicit file-content fields, symlinks, nonregular files
 (including FIFOs), non-UTF-8/NUL input, and artifacts larger than 8 MiB before

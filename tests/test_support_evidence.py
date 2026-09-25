@@ -171,6 +171,22 @@ class SupportBundleTests(unittest.TestCase):
             self.assertFalse((root / "bundle" / "resolver_record.json").exists())
             self.assertNotIn("private-secret", result["draft"])
 
+    def test_logs_and_worker_wrapper_labels_are_rejected_without_reading(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            log = root / "private.log"
+            wrapper = root / "private-wrapper.json"
+            log.write_text("private-host /var/log/glusterfs/private.log\n")
+            wrapper.write_text(json.dumps({"stdout": "private command output"}))
+            with self.assertRaisesRegex(ValueError, "unsupported artifact labels") as raised:
+                prepare_support_bundle(
+                    root / "bundle", {"logs": log, "worker_wrapper": wrapper},
+                    private_identifiers=["private-host", "/var/log/glusterfs/private.log"],
+                )
+            self.assertNotIn("private-host", str(raised.exception))
+            self.assertNotIn("private command output", str(raised.exception))
+            self.assertFalse((root / "bundle").exists())
+
     def test_refuses_file_payload_fields_before_writing_bundle(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

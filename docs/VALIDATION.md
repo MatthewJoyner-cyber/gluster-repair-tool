@@ -2,8 +2,24 @@
 
 ## Additional scoped qualification (2026-09-24)
 
-The core suite passed 843 tests after adding volume UUID binding and precise
-backend identity checks. The installed tool in the three-guest Ubuntu lab
+Installer failure and post-repair reboot follow-up:
+
+- On the installed three-guest Ubuntu 24.04 lab, changed pinned host identity,
+  encrypted operator key without an agent, and failure on the second SCP source
+  transfer were refused. For the transfer failure, installed files, sudoers
+  policy and the service key were unchanged, and remote staging was removed.
+- After the one empty synthetic missing-replica repair, guests rebooted one at a
+  time. Each returned with a new boot ID, passed installer/service verification,
+  restored all six directed management peer links, and reached connected
+  three-brick heal status with zero entries before the next reboot. Final volume
+  status showed no active volume tasks. Automated client-mount persistence,
+  other distributions and every package/sudoers fault remain untested.
+- The companion's documented test-discovery command passed all 26 tests; the
+  core's documented discovery command now passes all 844 tests, including a
+  focused refusal/no-copy regression for log and worker-wrapper labels.
+
+The preceding core suite passed 843 tests after adding volume UUID binding and
+precise backend identity checks. The installed tool in the three-guest Ubuntu lab
 accepted unchanged evidence, refused a same-size file change with preserved
 mtime, and refused a recreated volume with identical name/brick endpoints but
 a new UUID. These are bounded admission checks, not concurrency locks.
@@ -25,16 +41,19 @@ mount persistence was not tested. Original failures and reruns remain private.
 
 Ten saved artifacts from the controlled workflow exported through the
 metadata-only collector, with zero matches for the supplied private identifiers
-and no raw-source or identifier-file copies. Offline/disconnected, arbiter and
-AFR collection coverage remain separate qualification work. Nothing was sent.
+and no raw-source or identifier-file copies. AFR inspection from all three
+bricks of the canary-owned path also exported as metadata. Disconnected heal /
+offline status sections and an arbiter-volume capture remain separate
+qualification work. Nothing was sent.
 
 The final 161-file copy with fresh HOME/XDG passed 119 local links, source
 notices, entry-point help and 843 tests (one temporary-filesystem ACL skip).
 The normal workspace suite passed all 843 tests without skips. The updated
 temporary install had 69 byte-identical files and no privacy-scan findings.
 The companion's 45-file inventory, 26 tests, 50 local links and updated
-VM skill validation passed. These checks do not close the remaining diagnostic
-coverage, installation fault matrix or final remediation review.
+VM skill validation passed. These checks do not close remaining diagnostic
+coverage, package-validation/sudoers fault injection, or final remediation
+review.
 
 ## Earlier preparation snapshot
 
