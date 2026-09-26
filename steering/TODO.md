@@ -107,9 +107,12 @@ sequence. Repository names are selected; creation and publication follow accepta
   byte-identical 68-file local installed tree. The external private-identifier
   scan reported zero findings without echoing patterns. See
   [validation](../docs/VALIDATION.md). No host or Gluster service was contacted.
-- [ ] Repeat the inventory/privacy/link/file-only/installed-tree audit after
-  freezing the final source list. The current staged audit does not replace
-  clean-host or live acceptance.
+- [x] Repeat the inventory/privacy/link/file-only/installed-tree audit after
+  freezing the final source list (2026-09-26): exact 161-file copy and hashes,
+  119 local links, notices, fresh HOME/XDG, cleared inherited overrides, 845
+  tests (one ACL skip), zero source/installed privacy findings and 69
+  byte-identical installed files. See [validation](../docs/VALIDATION.md).
+  This does not replace clean-host, platform-matrix or live acceptance.
 - [x] Establish initial public provenance (2026-09-20): owner declaration,
   source/dependency inventory and future-contribution rule are recorded in
   [PROVENANCE.md](../PROVENANCE.md). Review each later external contribution

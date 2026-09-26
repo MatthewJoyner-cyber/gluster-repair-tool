@@ -1,5 +1,21 @@
 # Migration candidate validation
 
+## Frozen file-only and install audit (2026-09-26)
+
+Against core commit `79e0383`, a fresh temporary tree copied only the 161
+`FILES.txt` entries and ran under UID 1000 with fresh HOME/XDG paths and
+inherited Python, Gluster, XDG and sudo overrides removed. Inventory and hashes
+matched the committed source; all 119 local Markdown links and source notices
+passed. The documented offline suite ran 845 tests in 29.379 seconds with one
+ACL-dependent skip (`OK (skipped=1)`). The external private-identifier scan
+reported zero findings.
+
+A separate temporary installation contained 69 expected runtime files, each
+byte-identical to source; all six source/installed entry-point help invocations
+passed. The installed-tree privacy scan also reported zero findings. These
+checks cover the frozen local snapshot only; the platform matrix, physical-host
+policy and final remediation review remain open.
+
 ## Additional scoped qualification (2026-09-24)
 
 Installer failure and post-repair reboot follow-up:
