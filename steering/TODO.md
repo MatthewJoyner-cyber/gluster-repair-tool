@@ -86,6 +86,10 @@ sequence. Repository names are selected; creation and publication follow accepta
   pending-index and full-namespace heal refuse unqualified releases even when
   called outside the capability-report CLI. Scoped 11.1 pending heal remains
   available; full heal remains blocked pending live proof.
+- [x] Align repair-matrix and status hints with the command gates
+  (2026-09-26): they direct operators to the current capability report and
+  reviewed evidence rather than suggesting an unqualified full heal or native
+  resolver write.
 - [ ] Qualify full namespace heal and native resolver success/tie/failure on
   controlled disposable canaries before adding those exact version/feature
   pairs to the compatibility profile. Other Gluster releases need their own

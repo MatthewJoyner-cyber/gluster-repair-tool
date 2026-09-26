@@ -12,6 +12,8 @@ offline suite passed 858 tests in 28.484 seconds with one ACL-dependent skip.
 The 70-file installed tree was byte-identical; six source/installed help
 commands passed. The external private-identifier scan found zero matches.
 No live command qualification was added.
+The later operator-hint wording review passed the focused repair-matrix and
+status tests (9 tests); it changed no command dispatch or stored artifact shape.
 
 ## Compatibility profile audit before shared dispatch (2026-09-26)
 

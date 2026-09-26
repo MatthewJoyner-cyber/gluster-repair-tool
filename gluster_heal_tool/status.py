@@ -154,7 +154,8 @@ def status_warnings(path: str | Path) -> list[str]:
         warnings.append(
             "post-execute heal info shape has not changed for "
             f"{repeat_count} consecutive checks; probable repair gap after heal and mount verification; "
-            "try a full heal and a whole-volume find|stat pass, then consider filing a support request "
+            "inspect the Gluster capability report before any full heal; verify affected paths, "
+            "then rebuild evidence or prepare a support draft "
             f"(limit {repeat_limit})"
         )
     if final_check_guard.get("churn_hit_limit"):
@@ -162,7 +163,8 @@ def status_warnings(path: str | Path) -> list[str]:
         churn_limit = final_check_guard.get("churn_limit", 0)
         warnings.append(
             "post-execute heal info shape changed too many times; probable repair churn after repeated rescan and verify attempts; "
-            "try a full heal and a whole-volume find|stat pass, then consider filing a support request "
+            "inspect the Gluster capability report before any full heal; verify affected paths, "
+            "then rebuild evidence or prepare a support draft "
             f"(limit {churn_limit}, count {churn_count})"
         )
     for message in health_summary.get("warnings", []):

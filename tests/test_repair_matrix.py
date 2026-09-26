@@ -79,7 +79,7 @@ class RepairMatrixTests(unittest.TestCase):
         self.assertIn("Decision class", render_repair_matrix())
         self.assertIn("auto = majority then mtime", render_repair_matrix())
         self.assertIn("best-guess snapshot", render_repair_matrix())
-        self.assertIn("full heal first", render_repair_matrix())
+        self.assertIn("only when the current Gluster profile qualifies it", render_repair_matrix())
         self.assertIn("scan lag or stale bookkeeping", render_repair_matrix())
         self.assertIn("Avoid `sync`", render_repair_matrix())
         self.assertIn("symlink entries as file subcategories", render_repair_matrix())
