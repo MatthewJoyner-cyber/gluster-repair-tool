@@ -60,7 +60,7 @@ def _unique_raw_entries(heal_entries) -> list[str]:
 def _live_split_brain_gfids(volume: str) -> tuple[set[str], str]:
     """Return current split-brain GFIDs without starting a heal crawl."""
     try:
-        entries = parse_heal_info_text(get_heal_info_text(volume))
+        entries = parse_heal_info_text(get_heal_info_text(volume), require_connected=True)
     except RuntimeError as exc:
         return set(), str(exc)
     gfids = {

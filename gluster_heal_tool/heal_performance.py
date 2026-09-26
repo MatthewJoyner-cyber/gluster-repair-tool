@@ -3,9 +3,9 @@
 """Explicit Gluster heal performance inspection and tuning helpers."""
 from __future__ import annotations
 
-import re
 from typing import Any
 
+from .gluster_compat import QUALIFIED_FEATURES, feature_qualified
 from .health import build_volume_health_report
 from .volume import (
     get_gluster_version,
@@ -86,28 +86,34 @@ def _build_capability_report(volume: str) -> tuple[dict[str, object], list[str]]
     version = ""
     try:
         version = get_gluster_version()
-    except RuntimeError as exc:
+    except (RuntimeError, OSError) as exc:
         warnings.append(f"could not determine controller Gluster version: {exc}")
 
-    version_supported = bool(re.match(r"^\d+(?:\.\d+)+$", version))
+    index_qualified = feature_qualified(version, "pending_index_heal")
+    full_qualified = feature_qualified(version, "full_namespace_heal")
+    resolver_qualified = feature_qualified(version, "native_split_brain_resolution")
     capabilities: dict[str, object] = {
         "controller_gluster": {
             "detected_version": version,
-            "available": version_supported,
+            "available": bool(version),
+            "qualified_profile": version in QUALIFIED_FEATURES,
             "source": "gluster --version",
         },
         "pending_index_heal": {
-            "available": version_supported,
+            "available": index_qualified,
+            "qualification": "qualified" if index_qualified else "unqualified",
             "command_preview": ["gluster", "volume", "heal", volume],
             "scope": "Gluster pending index entries only; this is not full namespace healing",
         },
         "full_namespace_heal": {
-            "available": version_supported,
+            "available": full_qualified,
+            "qualification": "qualified" if full_qualified else "unqualified",
             "command_preview": ["gluster", "volume", "heal", volume, "full"],
             "scope": "entire namespace; explicit --full-heal-once and --execute -y only",
         },
         "per_file_split_brain_resolution": {
-            "available": version_supported,
+            "available": resolver_qualified,
+            "qualification": "qualified" if resolver_qualified else "unqualified",
             "scope": "only evidence-bound split-brain policy commands; use the repair planner",
             "command_shape": [
                 "gluster",
@@ -370,7 +376,7 @@ def execute_heal_performance(
             else {}
         )
         if not isinstance(full_capability, dict) or not full_capability.get("available"):
-            errors.append("full heal is blocked until the controller Gluster version is identified")
+            errors.append("full heal is blocked until this Gluster version has live command qualification")
     if execute and (changes_requested or full_launch_requested) and not batch:
         errors.append("heal-performance writes require --execute -y")
     if execute and not errors:

@@ -1,5 +1,23 @@
 # Migration candidate validation
 
+## Compatibility-gate candidate audit (2026-09-26)
+
+The current 165-file candidate adds exact Gluster feature profiles and strict
+post-repair heal-info completion checks. A fresh file-only copy under UID 1000,
+with isolated HOME/XDG paths and inherited Python, Gluster, XDG and sudo
+overrides cleared, matched all source hashes. It passed 128 local Markdown
+links, source notices, entry-point help, and 855 offline tests in 28.590 seconds
+with one ACL-dependent skip (`OK (skipped=1)`). A separate installed tree had
+70 expected byte-identical runtime files; six source/installed help invocations
+passed. The external private-identifier scan found zero matches.
+
+These checks verify local behavior and packaging. Pending index heal has scoped
+live proof on Gluster 11.1. Full namespace heal and native per-file resolver
+writes remain gated pending their own live command/output qualification; other
+Gluster releases need exact-version evidence. See the
+[compatibility profile](GLUSTER_COMPATIBILITY.md) and
+[open release work](RELEASE_PREPARATION.md).
+
 ## Frozen file-only and install audit (2026-09-26)
 
 Against the frozen 2026-09-26 core candidate, a fresh temporary tree copied only the 161
@@ -70,8 +88,8 @@ was sent.
 
 An earlier 161-file copy with fresh HOME/XDG passed 119 local links, source
 notices, entry-point help and 843 tests (one temporary-filesystem ACL skip).
-The latest worktree inventory remains exactly 161 files with no symlinks; the
-final full workspace suite passed 845 tests. The earlier updated temporary
+That earlier worktree inventory held 161 files with no symlinks; its
+full workspace suite passed 845 tests. The earlier updated temporary
 install had 69 byte-identical files and no privacy-scan findings; repeat the
 file-only/install audit after the source snapshot is frozen.
 The companion's 45-file inventory, 26 tests, 50 local links and updated

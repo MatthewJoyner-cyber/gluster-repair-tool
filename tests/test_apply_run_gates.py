@@ -13,7 +13,7 @@ from unittest.mock import Mock, patch
 
 from gluster_heal_tool import cli
 from gluster_heal_tool.apply_binding import BindingError
-from gluster_heal_tool.models import ApplyActionResult
+from gluster_heal_tool.models import ApplyActionResult, ApplyStep
 from tests.test_reversibility_gate import _bind_test_payload, _BOUND_VOLUME_INFO, _load_manager_module
 
 
@@ -37,6 +37,12 @@ class ApplyRunGateTests(unittest.TestCase):
             )
             if gate == "invalid-action":
                 result.notes = []
+            if gate == "compatibility":
+                result.steps = [ApplyStep(
+                    step_id="resolve", step_type="resolve_split_brain_gluster_cli",
+                    command_preview=["sudo", "-n", "gluster", "volume", "heal", "gtest",
+                                     "split-brain", "latest-mtime", "/example/file"],
+                )]
             payload = {"schema_version": 1, "actions": [result.to_dict()],
                        "controller_cycle": stop if gate == "artifact-controller" else {}}
             _bind_test_payload(root, payload)
@@ -79,7 +85,12 @@ class ApplyRunGateTests(unittest.TestCase):
                 return {"actions": [], "summary": {"completed_actions": 1, "failed_actions": 0}}
 
             executor = Mock(side_effect=execute)
-            refresh = Mock(return_value=({}, {}))
+            final_check = (
+                {"available": False, "error": "brick status missing"}
+                if outcome == "heal-info-unavailable"
+                else {"available": True, "unique_count": 0}
+            )
+            refresh = Mock(return_value=(final_check, {}))
             health = Mock(return_value=(status, {"summary": {"ready": gate != "health"}}))
             setters = Mock(side_effect=set_heal)
             restorer = Mock(side_effect=restore)
@@ -95,6 +106,7 @@ class ApplyRunGateTests(unittest.TestCase):
                 for module in (cli, self.manager):
                     for name, mock in {
                         "get_volume_info": Mock(return_value=_BOUND_VOLUME_INFO),
+                        "get_gluster_version": Mock(return_value="11.1"),
                         "get_heal_settings": Mock(side_effect=lambda volume: dict(live)),
                         "set_heal_settings": setters,
                         "set_heal_settings_exact": restorer,
@@ -113,7 +125,7 @@ class ApplyRunGateTests(unittest.TestCase):
     def test_refused_public_forms_never_execute_or_change_heal(self):
         for entry in (cli, self.manager):
             for flags in ((), ("--execute-ready",), ("--require-snapshot", "--snapshot-ack")):
-                for gate in ("controller", "artifact-controller", "health", "authorization", "invalid-action", "freshness"):
+                for gate in ("controller", "artifact-controller", "health", "authorization", "invalid-action", "freshness", "compatibility"):
                     with self.subTest(entry=entry.__name__, flags=flags, gate=gate):
                         code, executor, setter, restorer, refresh, *_ = self.run_case(entry, flags, gate=gate, managed=True)
                         self.assertEqual(2, code)
@@ -121,7 +133,7 @@ class ApplyRunGateTests(unittest.TestCase):
                         setter.assert_not_called()
                         restorer.assert_not_called()
                         refresh.assert_not_called()
-            for gate in ("controller", "artifact-controller", "snapshot", "health", "authorization", "invalid-action", "freshness"):
+            for gate in ("controller", "artifact-controller", "snapshot", "health", "authorization", "invalid-action", "freshness", "compatibility"):
                 with self.subTest(entry=entry.__name__, gate=gate, form="plain"):
                     code, executor, setter, restorer, refresh, *_ = self.run_case(entry, gate=gate)
                     self.assertEqual(2, code)
@@ -166,6 +178,21 @@ class ApplyRunGateTests(unittest.TestCase):
                     refresh.assert_not_called()
                     verify.assert_not_called()
                     self.assertEqual("unknown", status["execution_write_state"])
+                    self.assertEqual(original, live)
+
+    def test_unqualified_final_heal_info_blocks_completion(self):
+        for entry in (cli, self.manager):
+            for managed in (False, True):
+                with self.subTest(entry=entry.__name__, managed=managed):
+                    code, executor, _, _, refresh, verify, status, _, live, original, stderr = self.run_case(
+                        entry, outcome="heal-info-unavailable", managed=managed,
+                    )
+                    self.assertEqual(2, code, stderr)
+                    executor.assert_called_once()
+                    refresh.assert_called_once()
+                    verify.assert_not_called()
+                    self.assertTrue(status["completion_blocked"])
+                    self.assertEqual("apply-run-heal-info-unavailable", status["phase"])
                     self.assertEqual(original, live)
 
     def test_restore_failure_blocks_completion_for_both_entry_points(self):

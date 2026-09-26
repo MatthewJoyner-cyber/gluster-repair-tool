@@ -17,6 +17,7 @@ docs/EXECUTION_DEPENDENCIES.md
 docs/EXECUTION_JOURNAL.md
 docs/EXECUTION_OUTCOMES.md
 docs/GLUSTER_GUIDE.md
+docs/GLUSTER_COMPATIBILITY.md
 docs/HEAL_ROW_MATCHING.md
 docs/HOST_HELPER_CONTRACT.md
 docs/PORTABILITY.md
@@ -69,6 +70,7 @@ gluster_heal_tool/execution_plan.py
 gluster_heal_tool/executor.py
 gluster_heal_tool/graph_audit.py
 gluster_heal_tool/graph_family_report.py
+gluster_heal_tool/gluster_compat.py
 gluster_heal_tool/heal_guard.py
 gluster_heal_tool/heal_parser.py
 gluster_heal_tool/heal_performance.py
@@ -131,7 +133,9 @@ tests/test_execution_journal.py
 tests/test_execution_plan.py
 tests/test_executor_outcomes.py
 tests/test_graph_family_report.py
+tests/test_gluster_compat.py
 tests/test_heal_guard.py
+tests/test_heal_parser.py
 tests/test_heal_performance.py
 tests/test_health.py
 tests/test_host_ops.py

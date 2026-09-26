@@ -61,6 +61,7 @@ from .apply_reporting import needs_acl_temp_mount
 from .manifest import build_manifest, load_manifest, write_manifest
 from .apply_binding import BindingError, validate_apply_binding, validate_live_topology, validate_plan_context, volume_identity
 from .execution_journal import ExecutionJournalError, check_run_reusable
+from .gluster_compat import require_execution_features
 from .directory_tie import (
     build_directory_tie_decisions,
     build_directory_tie_report,
@@ -116,6 +117,7 @@ from .volume import (
     set_heal_settings_exact,
     summarize_heal_settings,
     get_volume_info,
+    get_gluster_version,
     parse_brick_roles,
     discover_brick_paths,
 )
@@ -1425,6 +1427,11 @@ def main(argv: list[str] | None = None) -> int:
             except BindingError as exc:
                 print(f"ERROR: {exc}", file=sys.stderr)
                 return 2
+            try:
+                require_execution_features(results, get_gluster_version)
+            except RuntimeError as exc:
+                print(f"ERROR: execution compatibility check failed: {exc}", file=sys.stderr)
+                return 2
             if not args.skip_health_check:
                 volume = bound_volume
                 if not volume:
@@ -1721,6 +1728,22 @@ def main(argv: list[str] | None = None) -> int:
                         file=sys.stderr,
                     )
                     return 2
+            if volume and not args.stage_only and not final_check.get("available"):
+                update_status(
+                    args.status_file,
+                    phase="apply-run-heal-info-unavailable",
+                    results_out=results_out,
+                    summary=report["summary"],
+                    final_check=final_check,
+                    final_check_guard=final_check_guard,
+                    completion_blocked=True,
+                )
+                print(
+                    "ERROR: post-execute heal information is unavailable or unqualified; "
+                    "inspect the volume and retained backups before declaring completion",
+                    file=sys.stderr,
+                )
+                return 2
             verification: dict[str, object] = {}
             backup_maintenance: dict[str, object] = {}
             controller_cycle_status = build_controller_cycle_status(

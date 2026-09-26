@@ -23,7 +23,10 @@ INDEX = f"/.glusterfs/indices/xattrop/{GFID}"
 
 class LiveSplitBrainRouteTests(unittest.TestCase):
     def test_path_only_split_brain_row_blocks_identity_based_cleanup(self) -> None:
-        heal_info = "Brick brick-a:/brick\n/data/file - Is in split-brain\n"
+        heal_info = (
+            "Brick brick-a:/brick\n/data/file - Is in split-brain\n"
+            "Status: Connected\nNumber of entries: 1\n"
+        )
         with patch.object(manager, "get_heal_info_text", return_value=heal_info):
             gfids, error = manager._live_split_brain_gfids("testvol")
         self.assertEqual(set(), gfids)

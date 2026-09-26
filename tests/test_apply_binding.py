@@ -282,7 +282,7 @@ class ApplyBindingTests(unittest.TestCase):
                     patch.object(cli, "get_volume_info", return_value=VOLUME_INFO) as topology,
                     patch.object(cli, "get_heal_settings", return_value={}),
                     patch.object(cli, "set_heal_settings") as heal_write,
-                    patch.object(cli, "_refresh_post_execute_heal_preserving_settings", return_value=({}, {})),
+                    patch.object(cli, "_refresh_post_execute_heal_preserving_settings", return_value=({"available": True, "unique_count": 0}, {})),
                     patch.object(cli, "execute_apply_results", return_value={"actions": [], "summary": {}}) as execute,
                     contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()) as stderr,
                 ):

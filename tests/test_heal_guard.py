@@ -32,6 +32,17 @@ Number of entries: 3
         self.assertEqual(["/example/b", "/example/a"], report["sample_paths"])
         self.assertTrue(report["unique_signature"])
 
+    def test_missing_offline_status_cannot_pass_as_zero_pending(self) -> None:
+        heal_text = (
+            "Brick peer-a:/brick-a\nStatus: Connected\nNumber of entries: 0\n"
+            "Brick peer-b:/brick-b\nNumber of entries: -\n"
+        )
+        with patch("gluster_heal_tool.heal_guard.get_heal_info_text", return_value=heal_text):
+            report = build_heal_info_snapshot("gtest")
+        self.assertFalse(report["available"])
+        self.assertEqual(0, report["entry_count"])
+        self.assertIn("unqualified", report["error"])
+
     def test_get_heal_info_text_falls_back_to_sudo(self) -> None:
         plain = subprocess.CompletedProcess(
             args=["gluster", "volume", "heal", "gtest", "info"],

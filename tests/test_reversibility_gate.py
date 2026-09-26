@@ -277,7 +277,7 @@ class ReversibilityGateTests(unittest.TestCase):
                 patch.object(package_cli, "get_volume_info", return_value=_BOUND_VOLUME_INFO),
                 patch.object(package_cli, "get_heal_settings", return_value=live_off_settings) as package_settings,
                 patch.object(package_cli, "summarize_heal_settings", return_value=live_off_summary),
-                patch.object(package_cli, "_refresh_post_execute_heal_preserving_settings", return_value=({}, {})),
+                patch.object(package_cli, "_refresh_post_execute_heal_preserving_settings", return_value=({"available": True, "unique_count": 0}, {})),
                 contextlib.redirect_stdout(package_stdout),
                 contextlib.redirect_stderr(package_stderr),
             ):
@@ -302,7 +302,7 @@ class ReversibilityGateTests(unittest.TestCase):
                 patch.object(package_cli, "get_volume_info", return_value=_BOUND_VOLUME_INFO),
                 patch.object(package_cli, "get_heal_settings", return_value=live_off_settings) as manager_settings,
                 patch.object(package_cli, "summarize_heal_settings", return_value=live_off_summary),
-                patch.object(package_cli, "_refresh_post_execute_heal_preserving_settings", return_value=({}, {})),
+                patch.object(package_cli, "_refresh_post_execute_heal_preserving_settings", return_value=({"available": True, "unique_count": 0}, {})),
                 contextlib.redirect_stdout(manager_stdout),
                 contextlib.redirect_stderr(manager_stderr),
             ):

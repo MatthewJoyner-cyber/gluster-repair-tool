@@ -22,8 +22,10 @@ from .models import ApplyActionResult, ApplyStep
 from .execution_plan import actions_conflict, execution_dependency_errors
 from .execution_outcomes import command_message, missing_removal_tolerated, native_resolver_mode, native_resolver_outcome
 from .execution_journal import ExecutionJournal, ExecutionJournalError, recorded_command
+from .gluster_compat import require_execution_features
 from .remote_ops import ssh_remote_command
 from .role_safety import payload_source_hosts_from_result, role_evidence_error
+from .volume import get_gluster_version
 from .shared_io import write_json_shared, write_text_shared
 
 
@@ -829,6 +831,10 @@ def execute_apply_results(
     parallel_nice: int = 5,
     run_dir: str | Path | None = None,
 ) -> dict[str, object]:
+    try:
+        require_execution_features(results, get_gluster_version)
+    except RuntimeError as exc:
+        raise ExecutionJournalError(f"execution compatibility check failed before dispatch: {exc}") from exc
     run_path = Path(run_dir) if run_dir else Path(tempfile.mkdtemp(prefix="gluster-execution-"))
     try:
         with ExecutionJournal(run_path) as journal:

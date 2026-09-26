@@ -276,12 +276,14 @@ class MetadataExporter:
             match = re.fullmatch(r"Brick (.+?):(/.*)", line)
             if match:
                 current = {"host": self.alias("server", match[1]),
-                           "path": self.alias("path", match[2]), "entries": []}
+                           "path": self.alias("path", match[2]), "connection_state": "unknown",
+                           "entries": []}
                 bricks.append(current)
                 continue
             if current is not None:
                 if line.startswith("Status: ") and line[8:] in {"Connected", "Disconnected"}:
                     current["connected"] = line[8:] == "Connected"
+                    current["connection_state"] = line[8:].lower()
                     continue
                 count = re.fullmatch(r"Number of entries: ([0-9]{1,12})", line)
                 if count:

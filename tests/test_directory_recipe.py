@@ -311,6 +311,12 @@ def _stale_index_obs(
 
 
 class DirectoryRecipeTests(unittest.TestCase):
+    def setUp(self):
+        # Recipe tests exercise command outcomes after compatibility admission.
+        admitted = patch("gluster_heal_tool.executor.require_execution_features")
+        admitted.start()
+        self.addCleanup(admitted.stop)
+
     def test_symlink_chain_resolver_tracks_terminal_directory(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

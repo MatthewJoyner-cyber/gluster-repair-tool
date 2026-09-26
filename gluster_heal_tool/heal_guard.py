@@ -17,6 +17,7 @@ DEFAULT_HEAL_INFO_CHURN_LIMIT = 10
 def build_heal_info_snapshot(volume: str) -> dict[str, object]:
     try:
         heal_text = get_heal_info_text(volume)
+        entries = parse_heal_info_text(heal_text, require_connected=True)
     except Exception as exc:  # pragma: no cover - best-effort live check
         return {
             "available": False,
@@ -27,7 +28,6 @@ def build_heal_info_snapshot(volume: str) -> dict[str, object]:
             "unique_signature": "",
             "error": str(exc),
         }
-    entries = parse_heal_info_text(heal_text)
     unique_paths: list[str] = []
     seen: set[str] = set()
     for entry in entries:

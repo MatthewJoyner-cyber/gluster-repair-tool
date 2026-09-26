@@ -56,7 +56,9 @@ class HealPerformanceTests(unittest.TestCase):
 
         capabilities = report["capabilities"]
         self.assertEqual("11.1", capabilities["controller_gluster"]["detected_version"])
-        self.assertTrue(capabilities["full_namespace_heal"]["available"])
+        self.assertTrue(capabilities["pending_index_heal"]["available"])
+        self.assertFalse(capabilities["full_namespace_heal"]["available"])
+        self.assertFalse(capabilities["per_file_split_brain_resolution"]["available"])
         self.assertEqual("on", capabilities["granular_entry_heal"]["current"])
         self.assertIn("Number of entries: 4", capabilities["pending_backlog_statistics"]["output"])
         self.assertNotIn("checks", report["health"])
@@ -195,7 +197,19 @@ class HealPerformanceTests(unittest.TestCase):
             )
 
         run_full.assert_not_called()
-        self.assertIn("controller Gluster version", result["errors"][0])
+        self.assertIn("live command qualification", result["errors"][0])
+
+    def test_new_numeric_version_does_not_claim_unproven_commands(self) -> None:
+        with patch("gluster_heal_tool.heal_performance.get_gluster_version", return_value="12.0"), patch(
+            "gluster_heal_tool.heal_performance.get_volume_option", return_value="on"
+        ), patch("gluster_heal_tool.heal_performance.get_heal_statistics", return_value="Number of entries: 0\n"):
+            report = build_heal_performance_report(
+                "gtest", ssh_user="repair", connect_timeout=5.0, health_report=READY_HEALTH,
+            )
+        self.assertTrue(report["capabilities"]["controller_gluster"]["available"])
+        self.assertFalse(report["capabilities"]["controller_gluster"]["qualified_profile"])
+        for name in ("pending_index_heal", "full_namespace_heal", "per_file_split_brain_resolution"):
+            self.assertFalse(report["capabilities"][name]["available"])
 
     def test_full_heal_launches_once_only_with_explicit_authority(self) -> None:
         report = {

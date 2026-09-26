@@ -22,6 +22,12 @@ def resolver(mode="latest-mtime"):
 
 
 class ExecutorOutcomeTests(unittest.TestCase):
+    def setUp(self):
+        # These cases exercise response handling after compatibility admission.
+        admitted = patch("gluster_heal_tool.executor.require_execution_features")
+        admitted.start()
+        self.addCleanup(admitted.stop)
+
     def test_operational_resolver_failures_stop_fallback_and_dependents(self):
         cases = [(255, "", "Connection lost after dispatch"),
                  (1, "", "Permission denied"), (1, "", "unrecognized resolver failure"),

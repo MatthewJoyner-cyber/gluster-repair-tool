@@ -171,8 +171,18 @@ class DiagnosticMetadataTests(unittest.TestCase):
         first, second = result["metadata"]["bricks"]
         self.assertIs(first["connected"], True)
         self.assertIs(second["connected"], False)
+        self.assertEqual("connected", first["connection_state"])
+        self.assertEqual("disconnected", second["connection_state"])
         self.assertNotIn("peer-a", json.dumps(result))
         self.assertNotIn("peer-b", json.dumps(result))
+
+    def test_heal_info_missing_status_is_explicitly_unknown(self) -> None:
+        result = MetadataExporter().export(
+            "heal_info", "Brick peer-a:/brick-a\nNumber of entries: -\n"
+        )
+        brick = result["metadata"]["bricks"][0]
+        self.assertEqual("unknown", brick["connection_state"])
+        self.assertNotIn("connected", brick)
 
     def test_topology_and_health_export_keep_only_parsed_operational_facts(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

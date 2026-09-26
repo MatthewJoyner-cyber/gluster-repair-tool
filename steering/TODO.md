@@ -76,6 +76,17 @@ sequence. Repository names are selected; creation and publication follow accepta
   installed help and the full offline suite (2026-09-20, Linux/Python 3.12.3).
   Fix the test expectation that froze an import-time default across an XDG
   environment change. See [portability limits](../docs/PORTABILITY.md).
+- [x] Add exact Gluster feature profiles and response-format guards
+  (2026-09-26). Only pending index heal has scoped live proof on 11.1.
+  Full namespace heal and native per-file resolver writes are blocked until
+  their command/output behavior is qualified. Post-repair heal info requires
+  explicit connected sections and consistent counts; diagnostic export marks
+  missing connection state unknown. See [compatibility](../docs/GLUSTER_COMPATIBILITY.md).
+- [ ] Qualify full namespace heal and native resolver success/tie/failure on
+  controlled disposable canaries before adding those exact version/feature
+  pairs to the compatibility profile. Other Gluster releases need their own
+  output fixtures and live command checks. Keep the current write gates in
+  place until those results are reviewed.
 - [ ] Finish R13 qualification beyond the tested Ubuntu 24.04 guests: supported
   interpreter/distribution matrix and physical-host policy. Current live
   evidence is limited to the three tested Ubuntu 24.04 guests. Follow the
@@ -107,12 +118,16 @@ sequence. Repository names are selected; creation and publication follow accepta
   byte-identical 68-file local installed tree. The external private-identifier
   scan reported zero findings without echoing patterns. See
   [validation](../docs/VALIDATION.md). No host or Gluster service was contacted.
-- [x] Repeat the inventory/privacy/link/file-only/installed-tree audit after
-  freezing the final source list (2026-09-26): exact 161-file copy and hashes,
-  119 local links, notices, fresh HOME/XDG, cleared inherited overrides, 845
+- [x] Audit the prior 161-file source snapshot (2026-09-26): exact copy and hashes,
+  120 local links, notices, fresh HOME/XDG, cleared inherited overrides, 845
   tests (one ACL skip), zero source/installed privacy findings and 69
   byte-identical installed files. See [validation](../docs/VALIDATION.md).
   This does not replace clean-host, platform-matrix or live acceptance.
+- [x] Audit the 165-file compatibility-gate candidate (2026-09-26): fresh
+  file-only copy, hashes, 128 links, notices, 855 offline tests (one ACL skip),
+  70 byte-identical installed files, six source/installed help commands, and
+  zero external private-identifier findings. See
+  [validation](../docs/VALIDATION.md). Final live command qualification remains open.
 - [x] Establish initial public provenance (2026-09-20): owner declaration,
   source/dependency inventory and future-contribution rule are recorded in
   [PROVENANCE.md](../PROVENANCE.md). Review each later external contribution

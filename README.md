@@ -41,7 +41,9 @@ python3 -m unittest discover -s tests -v
 ```
 
 See [local portability and deployment limits](docs/PORTABILITY.md) for the
-tested environment, state paths and remaining clean-host checks.
+tested environment, state paths and remaining clean-host checks. The
+[Gluster compatibility profile](docs/GLUSTER_COMPATIBILITY.md) records which
+write commands and output shapes have live qualification.
 
 Live operations additionally need the matching Gluster client/CLI, SSH and
 authorized remote workers. Individual operations use rsync, tar, attr/ACL

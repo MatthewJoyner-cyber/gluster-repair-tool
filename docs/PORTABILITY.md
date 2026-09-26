@@ -11,7 +11,11 @@ configuration, or personal mount.
 | --- | --- | --- |
 | Linux, CPython 3.12.3, unprivileged account | Clean file-only copy, fresh HOME/XDG state, full offline suite and installed entry-point help pass | Repeat against the final source snapshot |
 | Python 3.13 or later | Bootstrap's minimum-version gate does not reject it; no interpreter was available for tests here | Run full suite and install check |
-| Ubuntu 24.04, Python 3.12.3, Gluster 11.1 | Three fresh guests passed account/ownership, real sudoers, helper deployment, all directed peer logins and repeat installation; scoped backup and native-heal canaries passed | Other distributions/versions, installation failure cases, post-volume reboot and stable repair fixtures |
+| Ubuntu 24.04, Python 3.12.3, Gluster 11.1 | Three fresh guests passed account/ownership, real sudoers, helper deployment, all directed peer logins, repeat installation, scoped backup and pending-index-heal canaries, installer failure cases and sequential reboot recovery | Other distributions/versions, physical-host policy, full namespace heal and native per-file resolver writes |
+
+The [Gluster compatibility profile](GLUSTER_COMPATIBILITY.md) lists the exact
+features admitted on this version and the output formats that still need live
+proof. Unknown versions remain usable for previews and read-only collection.
 
 Work defaults to `$XDG_STATE_HOME/gluster-repair/work` when `XDG_STATE_HOME`
 is absolute, otherwise `$HOME/.local/state/gluster-repair/work`. Backup

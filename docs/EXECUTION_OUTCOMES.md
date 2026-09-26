@@ -4,6 +4,10 @@ Native split-brain commands are writes. Losing their response does not establish
 that nothing changed. An unrecognized response or operational failure sets the
 step and action to `unknown`, stops all remaining steps in that action, and
 blocks dependent actions. Keep-going may still run independent actions.
+The current [compatibility profile](GLUSTER_COMPATIBILITY.md) has no live-qualified
+native resolver write path. Public apply-run and direct executor calls refuse
+such a plan before any action dispatch; the response rules below describe the
+behavior to retain when a version is qualified with a controlled live canary.
 Inspect possible effects, refresh evidence and build a new plan before another
 attempt. There is no automatic resolver retry or fallback after an unknown result.
 

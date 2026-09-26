@@ -49,6 +49,9 @@ require fixes; rerun the checks affected by those changes before publication.
   qualification: [bootstrap](BOOTSTRAP.md) and [test plan](../steering/TEST_PLAN.md).
 - Supported environment claims must remain within the tested matrix:
   [portability](PORTABILITY.md).
+- Full namespace heal, native resolver writes and new Gluster output formats
+  need scoped live qualification before their [compatibility profile](GLUSTER_COMPATIBILITY.md)
+  admits them.
 - Repeat file-only and installed-tree checks against the final snapshot and
   complete the remediation review: [TODO](../steering/TODO.md).
 

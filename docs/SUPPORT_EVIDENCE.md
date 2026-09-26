@@ -76,7 +76,7 @@ not valid repair inputs or evidence of current execution authority.
 
 | Artifact label | Accepted saved format and retained metadata |
 | --- | --- |
-| `heal_info` | Gluster brick sections, connection state, entry counts, aliased paths, canonical GFIDs and split-brain flags |
+| `heal_info` | Gluster brick sections, explicit connected/disconnected or unknown connection state, entry counts, aliased paths, canonical GFIDs and split-brain flags |
 | `volume_info` | Recognized Gluster volume name/type/state and parsed brick roles with aliased host/path topology |
 | `volume_status` | Parsed Gluster brick and self-heal-daemon online/PID state with aliased hosts and paths |
 | `health` | Version-1 health report: topology aliases, selected check outcomes, free space/inode counts, heal-option states, snapshot flags and summary counts |
