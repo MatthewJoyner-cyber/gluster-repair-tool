@@ -2,10 +2,10 @@
 
 ## Frozen file-only and install audit (2026-09-26)
 
-Against core commit `79e0383`, a fresh temporary tree copied only the 161
+Against the frozen 2026-09-26 core candidate, a fresh temporary tree copied only the 161
 `FILES.txt` entries and ran under UID 1000 with fresh HOME/XDG paths and
 inherited Python, Gluster, XDG and sudo overrides removed. Inventory and hashes
-matched the committed source; all 119 local Markdown links and source notices
+matched the committed source; all 120 local Markdown links and source notices
 passed. The documented offline suite ran 845 tests in 29.379 seconds with one
 ACL-dependent skip (`OK (skipped=1)`). The external private-identifier scan
 reported zero findings.
