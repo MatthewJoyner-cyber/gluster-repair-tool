@@ -20,6 +20,13 @@ inconsistent count makes the check unavailable. The CLI then reports an
 incomplete run and retains backup artifacts. This is a response-format gate:
 it does not infer connectivity from the Gluster version.
 
+The shared pending-index and full-namespace heal functions also check the
+installed version immediately before issuing a command. This covers manager,
+repair and development-canary callers that bypass the capability report. A
+developer qualifying a new command format must use a controlled disposable
+lab procedure before changing the profile; ordinary tool entry points do not
+override an unqualified feature.
+
 The metadata-only diagnostic exporter keeps the brick's connection state as
 `unknown` when `Status` is missing. It can still export other recognized
 metadata for human review. Preview and evidence collection remain available

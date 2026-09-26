@@ -1,8 +1,21 @@
 # Migration candidate validation
 
-## Compatibility-gate candidate audit (2026-09-26)
+## Shared heal-dispatch gate (2026-09-26)
 
-The current 165-file candidate adds exact Gluster feature profiles and strict
+The shared pending-index and full-namespace heal functions now check the exact
+Gluster profile before launching a command. Focused tests proved that unknown
+releases and unqualified features dispatch no write; the 11.1 pending-index
+path still dispatches. A fresh file-only copy under UID 1000 with isolated
+HOME/XDG paths and inherited Python, Gluster, XDG and sudo overrides cleared
+matched the 165-file source hashes, 129 local links and source notices. Its
+offline suite passed 858 tests in 28.484 seconds with one ACL-dependent skip.
+The 70-file installed tree was byte-identical; six source/installed help
+commands passed. The external private-identifier scan found zero matches.
+No live command qualification was added.
+
+## Compatibility profile audit before shared dispatch (2026-09-26)
+
+The preceding 165-file candidate added exact Gluster feature profiles and strict
 post-repair heal-info completion checks. A fresh file-only copy under UID 1000,
 with isolated HOME/XDG paths and inherited Python, Gluster, XDG and sudo
 overrides cleared, matched all source hashes. It passed 128 local Markdown

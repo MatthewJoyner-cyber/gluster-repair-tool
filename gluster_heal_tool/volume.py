@@ -10,6 +10,7 @@ import subprocess
 
 from .controller_paths import default_brick_layout_path
 from .controller_paths import default_health_report_path
+from .gluster_compat import require_qualified_feature
 from .heal_parser import parse_heal_info_text
 
 HEAL_OPTIONS = [
@@ -59,6 +60,7 @@ def get_heal_info_text(volume: str) -> str:
 
 
 def run_heal(volume: str, *, settle_seconds: float = 5.0) -> None:
+    require_qualified_feature("pending_index_heal", get_gluster_version, "pending index heal")
     _run_gluster_command_with_sudo_fallback(
         ["gluster", "volume", "heal", volume],
         error_prefix=f"failed to launch gluster heal for {volume}",
@@ -68,6 +70,7 @@ def run_heal(volume: str, *, settle_seconds: float = 5.0) -> None:
 
 
 def run_full_heal(volume: str) -> None:
+    require_qualified_feature("full_namespace_heal", get_gluster_version, "full namespace heal")
     _run_gluster_command_with_sudo_fallback(
         ["gluster", "volume", "heal", volume, "full"],
         error_prefix=f"failed to launch full gluster heal for {volume}",

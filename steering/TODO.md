@@ -82,6 +82,10 @@ sequence. Repository names are selected; creation and publication follow accepta
   their command/output behavior is qualified. Post-repair heal info requires
   explicit connected sections and consistent counts; diagnostic export marks
   missing connection state unknown. See [compatibility](../docs/GLUSTER_COMPATIBILITY.md).
+- [x] Enforce the heal-command profile at shared dispatch (2026-09-26):
+  pending-index and full-namespace heal refuse unqualified releases even when
+  called outside the capability-report CLI. Scoped 11.1 pending heal remains
+  available; full heal remains blocked pending live proof.
 - [ ] Qualify full namespace heal and native resolver success/tie/failure on
   controlled disposable canaries before adding those exact version/feature
   pairs to the compatibility profile. Other Gluster releases need their own
@@ -128,6 +132,11 @@ sequence. Repository names are selected; creation and publication follow accepta
   70 byte-identical installed files, six source/installed help commands, and
   zero external private-identifier findings. See
   [validation](../docs/VALIDATION.md). Final live command qualification remains open.
+- [x] Re-audit after the shared heal-dispatch gate (2026-09-26): exact 165-file
+  copy and hashes, 129 local links, notices, isolated HOME/XDG, 858 offline
+  tests (one ACL skip), 70 byte-identical installed files, six help commands,
+  and zero external private-identifier findings. See
+  [validation](../docs/VALIDATION.md).
 - [x] Establish initial public provenance (2026-09-20): owner declaration,
   source/dependency inventory and future-contribution rule are recorded in
   [PROVENANCE.md](../PROVENANCE.md). Review each later external contribution

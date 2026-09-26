@@ -14,9 +14,36 @@ from gluster_heal_tool.volume import parse_brick_roles
 from gluster_heal_tool.volume import parse_common_brick_path
 from gluster_heal_tool.volume import parse_brick_paths
 from gluster_heal_tool.volume import discover_brick_paths
+from gluster_heal_tool.volume import run_heal, run_full_heal
 
 
 class VolumeParseTests(unittest.TestCase):
+    def test_heal_commands_refuse_unqualified_versions_before_write(self) -> None:
+        for command in (run_heal, run_full_heal):
+            for version in ("11.10", "12.0"):
+                with self.subTest(command=command.__name__, version=version), (
+                    patch("gluster_heal_tool.volume.get_gluster_version", return_value=version)
+                ), patch("gluster_heal_tool.volume._run_gluster_command") as dispatch:
+                    with self.assertRaisesRegex(RuntimeError, "unqualified"):
+                        command("testvol")
+                    dispatch.assert_not_called()
+
+    def test_pending_heal_qualified_version_can_dispatch(self) -> None:
+        with patch("gluster_heal_tool.volume.get_gluster_version", return_value="11.1"), patch(
+            "gluster_heal_tool.volume._run_gluster_command"
+        ) as dispatch:
+            dispatch.return_value.returncode = 0
+            run_heal("testvol", settle_seconds=0)
+        dispatch.assert_called_once_with(["gluster", "volume", "heal", "testvol"])
+
+    def test_full_heal_is_blocked_even_on_scoped_11_1_profile(self) -> None:
+        with patch("gluster_heal_tool.volume.get_gluster_version", return_value="11.1"), patch(
+            "gluster_heal_tool.volume._run_gluster_command"
+        ) as dispatch:
+            with self.assertRaisesRegex(RuntimeError, "unqualified"):
+                run_full_heal("testvol")
+        dispatch.assert_not_called()
+
     def test_parse_bricks_strips_arbiter_suffix_from_common_path(self) -> None:
         volume_info = """
 Volume Name: gtest3a

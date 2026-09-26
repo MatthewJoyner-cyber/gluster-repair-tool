@@ -1698,7 +1698,7 @@ Number of entries: 3
     def test_run_heal_invokes_gluster_heal_before_scan(self) -> None:
         from gluster_heal_tool.volume import run_heal
 
-        with patch("gluster_heal_tool.volume.subprocess.run") as run_command, patch(
+        with patch("gluster_heal_tool.volume.get_gluster_version", return_value="11.1"), patch("gluster_heal_tool.volume.subprocess.run") as run_command, patch(
             "gluster_heal_tool.volume.time.sleep"
         ) as sleep:
             run_command.return_value = subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr="")
