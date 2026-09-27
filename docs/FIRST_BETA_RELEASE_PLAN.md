@@ -216,11 +216,17 @@ does it remove the need for operator review of current evidence and backups.
 The lab work is resumed: the installed 168-file candidate passed final
 replica-3 and replica-2 read-only checks, while the older nonempty restore
 remains the narrow repair-write proof. Retain the exact candidate ID, test
-outcomes and private evidence pointers. Before publication, confirm that
-subsequent runtime changes did not affect that repair path or repeat its
-bounded write check if they did. A passing healthy or native-heal check is
-not nonempty repair proof. A deferred feature does not fail the release if it
-stays disabled.
+outcomes and private evidence pointers. A passing healthy or native-heal check
+is not nonempty repair proof. A deferred feature does not fail the release if
+it stays disabled.
+
+Source comparison completed 2026-09-27: after the committed metadata fix,
+the restore/apply/bootstrap/worker modules did not change. Only the
+nonblocking pre-10 health warning and its compatibility helper changed in
+runtime code; the installed 11.1 read-only pass exercised that change. The
+older nonempty restore proof can therefore be reused for its one file recipe
+without broadening it to other repair actions. Reassess if runtime code changes
+again before publication.
 
 ### C. Freeze and audit both source releases
 

@@ -33,6 +33,14 @@ for a byte-for-byte output diff. This result qualifies the observed 11.1
 read-only paths and preserves the earlier narrow replica-3 repair-cycle proof;
 it does not establish a new Gluster 10 or replica-2 write claim.
 
+The post-repair source comparison found no changes to the restore, apply,
+bootstrap or worker modules after the committed metadata fix. From that
+checkpoint to this candidate, the only runtime module changes were the
+nonblocking pre-10 health warning and its helper in the compatibility module;
+the 11.1 installed health and preview checks above exercised that change.
+The successful nonempty restore remains evidence for its one file recipe,
+with the explicit limit that this later candidate did not repeat a repair write.
+
 ## Gluster 11.1 failed-rename GFID-handle check (2026-09-27)
 
 An existing disposable-lab probe exercised the
