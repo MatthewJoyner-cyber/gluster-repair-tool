@@ -1,5 +1,19 @@
 # Migration candidate validation
 
+## Gluster 11.1 failed-rename GFID-handle check (2026-09-27)
+
+An existing disposable-lab probe exercised the
+[failed-directory-rename handle fix](https://github.com/gluster/glusterfs/issues/2752)
+listed in the [11.1 release notes](https://docs.gluster.org/en/main/release-notes/11.1/).
+On a three-brick replica, renaming a directory over a nonempty destination
+failed as expected. Independent checks found the source and destination GFIDs
+and their backend handles unchanged and valid on every brick afterward. The
+fixture was removed through the mount; both lab volumes returned to three
+connected bricks and zero heal entries, and the VMs were shut down. Earlier
+attempts had stopped before the rename because the lab probe used an incorrect
+GFID handle-path format. This is a scoped native Gluster fix check, not a
+repair-tool execution or proof of every rename/client variant.
+
 ## Reused repair-cycle canaries on Gluster 11.1 (2026-09-27)
 
 Two existing canary builders were run on the retained Ubuntu 24.04, Gluster
