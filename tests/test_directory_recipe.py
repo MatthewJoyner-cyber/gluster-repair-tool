@@ -1511,8 +1511,12 @@ class DirectoryRecipeTests(unittest.TestCase):
         steps_by_type = {step.step_type: step for step in result.steps}
         self.assertEqual(
             [
+                "sudo",
+                "-n",
                 "rsync",
-                "-a",
+                "-aAX",
+                "--numeric-ids",
+                "--filter=-x! user.*",
                 "-e",
                 SSH_TRANSPORT,
                 "--rsync-path",
@@ -3281,6 +3285,8 @@ Number of entries: 3
                 return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="", stderr="")
             if cmd[:3] == ["sudo", "-n", "cp"]:
                 return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="", stderr="")
+            if cmd[:3] == ["sudo", "-n", "rsync"]:
+                return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="", stderr="")
             if cmd[:3] == ["sudo", "-n", "mkdir"]:
                 return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="", stderr="")
             if cmd[:3] == ["sudo", "-n", "rm"]:
@@ -3411,6 +3417,8 @@ Number of entries: 3
             if cmd[:1] in (["mkdir"], ["rsync"], ["cp"], ["rm"]):
                 return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="", stderr="")
             if cmd[:3] == ["sudo", "-n", "cp"]:
+                return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="", stderr="")
+            if cmd[:3] == ["sudo", "-n", "rsync"]:
                 return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="", stderr="")
             if cmd[:3] == ["sudo", "-n", "mkdir"]:
                 return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="", stderr="")

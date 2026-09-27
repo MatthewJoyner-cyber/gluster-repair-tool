@@ -1,5 +1,59 @@
 # Migration candidate validation
 
+## Source and companion checks after metadata fix (2026-09-27)
+
+The current 167-file source inventory passed an isolated file-only install
+audit: 129 source notices, 70 byte-identical installed runtime files and six
+source/installed help invocations. All 135 local core document links passed;
+the companion's 45-file inventory and 51 links also passed. The complete core
+offline suite exited successfully after the transfer changes; focused
+directory/replica tests and the new transfer-command assertions passed.
+The companion passed 26 tests and all six skills validated. The external
+private-identifier scan found zero current-tree findings in both repositories;
+a separate scan of their existing Git patch histories found zero unexpected
+patterns, and every existing author/committer identity matched the selected
+public identity. These checks precede final reviewed commits and are not a
+release tag or publication.
+The live nonempty-file result below came from the preceding 166-file copy.
+The later change to the 167-file candidate affects directory subtree transfer
+and local reference backup commands; the staged-file and mount-restore
+commands used in that live result are unchanged. No claim is made that every
+167-file repair path was installed and exercised on the VMs.
+
+## First-beta nonempty restore (2026-09-27)
+
+The current 166-file candidate was copied to three disposable Ubuntu 24.04
+guests running Gluster 11.1 and installed through the normal bootstrap. The
+copied source files and 70 installed runtime files matched the local hashes.
+On the replica-3 volume, a synthetic 38,912-byte file had two agreeing source
+bricks and one deliberately missing backend copy, with healing suppressed for
+the mechanical test. A public CLI preview produced one reviewed
+`restore_missing_replica` action.
+
+The first execution preserved bytes, GFID, mode and a `user.beta` xattr, but
+changed ownership from UID/GID 0 to 1000 on all replicas. This was a failed
+acceptance test. The staging command now runs rsync as root with numeric IDs,
+ACLs and user xattrs preserved; it excludes backend `trusted.*` attributes.
+The mount restore uses archive copy. A fresh fixture, preview, scratch-stage
+probe and one execution then preserved the original digest, GFID, UID/GID 0,
+mode 0644 and `user.beta` on all three bricks. Its execution journal marked
+the action completed. The earlier fixture's ownership was restored through
+the mount and independently checked on every brick. Both volumes were quiet,
+normal healing was restored, bounded results exported, and all guests were
+shut down and retained. No production volume was changed.
+
+This qualifies one supervised nonempty missing-replica recipe on that exact
+lab combination. It does not qualify all repair recipes, ACL-bearing payloads,
+other Gluster versions, or native split-brain resolution. The missing target
+had no prior contents to roll back. Full suite, fresh-source and privacy audit
+results for the final candidate belong in a later entry after source freeze.
+
+A later source review applied the same ownership, ACL and user-xattr transfer
+settings to directory subtree staging/push, and archive copying to the local
+reference backup. Focused command-preview tests pass. Those directory write
+paths were **not** rerun live in this pass and are outside the live-qualified
+beta claim.
+
 ## Full-heal command smoke (2026-09-27)
 
 On a retained disposable three-guest Gluster 11.1 lab, a connected replica-3

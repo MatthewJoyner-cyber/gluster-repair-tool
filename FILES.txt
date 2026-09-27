@@ -109,6 +109,7 @@ steering/TEST_PLAN.md
 steering/TODO.md
 steering/WORKFLOW.md
 tests/test_apply_binding.py
+tests/test_apply_planning_transfer_metadata.py
 tests/test_apply_reporting.py
 tests/test_apply_run_gates.py
 tests/test_arbiter_safety.py
@@ -160,6 +161,7 @@ tests/test_temp_mount.py
 tests/test_volume.py
 FILES.txt
 docs/RELEASE_PREPARATION.md
+docs/FIRST_BETA_RELEASE_PLAN.md
 docs/CANARY_CASES.md
 gluster_heal_tool/execution_freshness.py
 tests/test_execution_freshness.py

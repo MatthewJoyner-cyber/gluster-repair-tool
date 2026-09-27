@@ -6,6 +6,13 @@ disposable live lab. A numeric version by itself no longer makes every command
 available. The compatibility profile is in
 [`gluster_compat.py`](../gluster_heal_tool/gluster_compat.py).
 
+The [first-beta plan](FIRST_BETA_RELEASE_PLAN.md) keeps the current gates and
+defers enabling unqualified optional commands. Compatibility review prioritizes
+changed/deprecated interfaces, output and helper contracts, and behavior changes
+that invalidate a safety assumption. A Gluster bug fix that heals a former
+canary normally needs a scoped observation, not another forced repair case.
+Untested versions are unqualified, not automatically known to be incompatible.
+
 | Feature | Gluster 11.1 qualification | Other versions |
 | --- | --- | --- |
 | Pending index heal | Scoped live canaries passed | Unqualified |

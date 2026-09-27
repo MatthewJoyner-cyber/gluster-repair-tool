@@ -4,11 +4,14 @@ GlusterFS evidence collection, repair planning, and guided recovery tooling.
 Version: `0.1.0` beta. Copyright holder: see
 [MAINTAINERS.md](MAINTAINERS.md). License: [GPL-2.0-only](COPYING).
 
-**Pre-release: live repair qualification and other review findings remain
-open.** Scoped Ubuntu installation and backup checks have passed; use this
-tree for development, offline analysis, and
-explicitly scoped disposable testing. See the [open review](steering/PRE_EXPORT_REVIEW.md)
-before considering repair writes.
+**Pre-release: final review and publication checks remain open.** On a
+disposable Ubuntu 24.04/Gluster 11.1 replica-3 lab, one supervised nonempty
+missing-replica restore preserved content, GFID, ownership, mode and a user
+xattr after a staging defect was fixed. This is a narrow repair proof; other
+recipes are not covered by that live result. Use the current tree for
+development, offline analysis and explicitly scoped testing. See the
+[first-beta plan](docs/FIRST_BETA_RELEASE_PLAN.md) and
+[open review](steering/PRE_EXPORT_REVIEW.md) before repair writes.
 
 Start with [Gluster: recovery limits and this tool](docs/GLUSTER_GUIDE.md).
 The [implementation history](HISTORY.md) summarizes the private
@@ -53,9 +56,9 @@ operation's help and host requirements before deployment.
 Bootstrap preserves the Python package layout and checks all installed entry
 points. Local tests cover fresh installation, repeated upgrades and preflight
 without key creation or staging. Only the default service account and install
-paths are supported. Fresh installation, service restrictions, peer SSH and
-repeat installation passed on three disposable Ubuntu 24.04 guests; additional
-platforms and failure/reboot coverage remain open. See the
+paths are supported. Fresh installation, service restrictions, peer SSH,
+repeat installation, selected failure cases and sequential reboots passed on
+three disposable Ubuntu 24.04 guests; additional platforms remain open. See the
 [bootstrap contract](docs/BOOTSTRAP.md) for commands and limits.
 The separate update script's [dry-run and preflight contract](docs/DEPLOY_PREVIEW.md)
 keeps previews read-only; its remote deployment still needs host qualification.

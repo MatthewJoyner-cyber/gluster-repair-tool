@@ -1,5 +1,10 @@
 # Repository release preparation
 
+The [first-beta release plan](FIRST_BETA_RELEASE_PLAN.md) defines the current
+acceptance scope and supersedes treating every historical qualification gap
+as a first-publication blocker. This is a best-effort beta, tested on the stated
+Ubuntu LTS baseline, with no exhaustive-coverage or reliability guarantee.
+
 The local candidates are being prepared before the first GitHub push. The
 owner-approved destination names are recorded in [MAINTAINERS.md](../MAINTAINERS.md);
 they are planned destinations, not a claim that either repository is online.
@@ -22,7 +27,10 @@ The original repository and its ledger remain private reference material.
 
 ## Final pre-push checkpoint
 
-1. Finish the remaining scoped qualification listed below and address findings.
+1. Complete checkpoints A-C in the first-beta plan: review known safety fixes,
+   one focused current-candidate pass, and the final source/companion audit.
+   Keep optional unqualified features disabled; do not wait for every platform
+   or historical canary to be qualified.
 2. Freeze the exact source snapshot; repeat inventory, source notices, privacy,
    local links and relevant tests. Inspect generated files and the Git history
    separately because the source privacy scan excludes `.git`.
@@ -39,21 +47,22 @@ The original repository and its ledger remain private reference material.
 Read [MIGRATION.md](../MIGRATION.md) for source/state cutover. Final tests may
 require fixes; rerun the checks affected by those changes before publication.
 
-## Core qualification still open
+## First-beta acceptance and later qualification
 
-- Live execution-origin binding, including same-name volume recreation and
-  object changes: [execution binding](EXECUTION_BINDING.md).
-- Metadata-only diagnostic collection in intended operator workflows:
-  [collection qualification](DIAGNOSTIC_COLLECTION_QUALIFICATION.md).
-- Broader repair-apply payload coverage and cross-release/physical-host
-  qualification: [bootstrap](BOOTSTRAP.md) and [test plan](../steering/TEST_PLAN.md).
-- Supported environment claims must remain within the tested matrix:
-  [portability](PORTABILITY.md).
-- Full namespace heal, native resolver writes and new Gluster output formats
-  need scoped live qualification before their [compatibility profile](GLUSTER_COMPATIBILITY.md)
-  admits them.
-- Repeat file-only and installed-tree checks against the final snapshot and
-  complete the remediation review: [TODO](../steering/TODO.md).
+Installed execution-origin refusal, fresh Ubuntu installation, scoped privileged
+backup fidelity and diagnostic collection already have live results in
+[VALIDATION.md](VALIDATION.md). Review those results against changed code rather
+than restarting completed qualification from historical open-task wording.
 
-Scoped Ubuntu installation, privileged backup and native-heal canary results
-are recorded in [VALIDATION.md](VALIDATION.md). They do not close the gates above.
+The bounded nonempty missing-replica workflow passed on 2026-09-27 after a
+staging ownership defect was found and fixed; see [validation](VALIDATION.md).
+Before a repair-capable beta, finish the final remediation/source review. Keep
+environment and repair claims within that evidence. The
+[test plan](../steering/TEST_PLAN.md) identifies the existing checks.
+
+Full namespace heal and native resolver writes remain disabled. Their additional
+qualification, broader diagnostic schemas, other Gluster releases and physical
+host/distribution coverage are follow-up work, not first-beta blockers while
+excluded from the advertised scope. Other Linux distributions are untested;
+the public test claim is Ubuntu LTS. Missing connection state remains unknown
+and cannot establish successful post-repair completion.

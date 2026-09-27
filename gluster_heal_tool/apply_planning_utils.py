@@ -34,7 +34,12 @@ def _ssh_rmr_preview(host: str, path: str) -> list[str]:
 
 def _stage_preview(host: str, source: str, target: str, *, preserve_symlink: bool = False) -> list[str]:
     # Use rsync for staging so symlink-backed winners are copied as links, not dereferenced targets.
-    return rsync_pull_command(host, source, target)
+    command = rsync_pull_command(host, source, target)
+    # Preserve numeric ownership as well as ACLs/user xattrs. An unprivileged
+    # receiver silently changes ownership to the controller user. Gluster's
+    # trusted.* backend attributes must not be copied into scratch or a mount.
+    command[1:2] = ["-aAX", "--numeric-ids", "--filter=-x! user.*"]
+    return ["sudo", "-n", *command]
 
 
 def _rsync_directory_contents_path(path: str) -> str:
@@ -49,12 +54,14 @@ def _rsync_directory_contents_path(path: str) -> str:
 def _stage_tree_contents_preview(host: str, source: str, target: str) -> list[str]:
     # Stage scratch data as directory contents, not as a nested basename; --delete is
     # safe here because the target is tool-owned scratch space.
-    return rsync_pull_command(
+    command = rsync_pull_command(
         host,
         _rsync_directory_contents_path(source),
         _rsync_directory_contents_path(target),
         delete=True,
     )
+    command[1:2] = ["-aAX", "--numeric-ids", "--filter=-x! user.*"]
+    return ["sudo", "-n", *command]
 
 
 def _push_preview(host: str, source: str, target: str) -> list[str]:
@@ -64,23 +71,21 @@ def _push_preview(host: str, source: str, target: str) -> list[str]:
 def _push_tree_contents_preview(host: str, source: str, target: str) -> list[str]:
     # Push the staged subtree contents into the existing backend directory. Without
     # trailing slashes rsync creates target/basename, which leaves child gaps intact.
-    return rsync_push_command(
+    command = rsync_push_command(
         host,
         _rsync_directory_contents_path(source),
         _rsync_directory_contents_path(target),
     )
+    command[1:2] = ["-aAX", "--numeric-ids", "--filter=-x! user.*"]
+    return ["sudo", "-n", *command]
 
 
 def _restore_preview(source: str, target: str, *, preserve_symlink: bool = False) -> list[str]:
-    if preserve_symlink:
-        return ["cp", "-a", source, target]
-    return ["cp", "-fp", source, target]
+    return ["sudo", "-n", "cp", "-a", source, target]
 
 
 def _mount_restore_preview(source: str, target: str, *, preserve_symlink: bool = False) -> list[str]:
-    if preserve_symlink:
-        return ["sudo", "-n", "cp", "-a", source, target]
-    return ["sudo", "-n", "cp", "-fp", source, target]
+    return ["sudo", "-n", "cp", "-a", source, target]
 
 
 def _mount_tree_restore_preview(source: str, target: str) -> list[str]:

@@ -3,6 +3,30 @@
 Use [release preparation](../docs/RELEASE_PREPARATION.md) for the final pre-push
 sequence. Repository names are selected; creation and publication follow acceptance.
 
+## First-beta queue (2026-09-27)
+
+The [first-beta plan](../docs/FIRST_BETA_RELEASE_PLAN.md) is the acceptance
+authority for scope; older open items below include post-beta work. Best-effort
+release, tested on the stated Ubuntu LTS baseline; other Linux distributions
+are untested. The operator resumed release work after the earlier lab pause.
+
+- [ ] A: Review R1-R13 fixes against current evidence and finalize enabled,
+  experimental and disabled feature claims; resolve known serious defects.
+- [x] B: Deployed the 166-file candidate, reviewed the installed preview,
+  and completed one bounded nonempty-file repair on a fresh fixture after
+  fixing an ownership defect found in the first attempt (2026-09-27).
+  Independent brick checks covered digest, GFID, UID/GID, mode and user xattr;
+  metadata export/layout checks passed. Healing was restored and guests shut
+  off. A later 167-file update changed directory transfer and reference-backup
+  commands, leaving the proved file path unchanged. Reuse unchanged installation,
+  refusal and native-heal evidence.
+- [ ] C: Freeze both trees; run final core/companion checks and source/history
+  privacy review, then reconcile public beta scope and feedback instructions.
+- [ ] D: Record reviewed commits/tags and publish both clean beta repositories
+  after acceptance under existing authority. Follow the plan's launch checklist.
+
+## Implementation evidence and follow-up backlog
+
 - [x] Implement R1 saved execution-origin binding and refusal tests in the
   candidate (2026-09-20). See [binding scope and limits](../docs/EXECUTION_BINDING.md).
 - [x] Add R1 volume UUID and precise backend freshness checks (2026-09-24).
@@ -57,7 +81,7 @@ sequence. Repository names are selected; creation and publication follow accepta
   AFR inspector output (2026-09-20; local synthetic tests). Names and paths
   become aliases; unknown fields/formats are omitted. Human review remains
   required. See [supported formats and limits](../docs/SUPPORT_EVIDENCE.md).
-- [ ] Qualify diagnostic format coverage against intended operator collection
+- [ ] Post-beta: extend diagnostic format coverage against intended operator collection
   workflows. Parsed volume-info/status and version-1 health reports export
   selected topology and readiness fields; unknown log and worker-wrapper labels
   are refused before reading, and recognized labels without a schema are
@@ -90,13 +114,13 @@ sequence. Repository names are selected; creation and publication follow accepta
   (2026-09-26): they direct operators to the current capability report and
   reviewed evidence rather than suggesting an unqualified full heal or native
   resolver write.
-- [ ] Qualify full namespace heal and native resolver success/tie/failure on
+- [ ] Post-beta feature enablement: qualify full namespace heal and native resolver success/tie/failure on
   controlled disposable canaries before adding those exact version/feature
   pairs to the compatibility profile. Other Gluster releases need their own
   output fixtures and live command checks. Keep the current write gates in
   place until those results are reviewed. A Gluster 11.1 quiet-volume full-heal
   command smoke passed on 2026-09-27; no pending repair effect was tested.
-- [ ] Finish R13 qualification beyond the tested Ubuntu 24.04 guests: supported
+- [ ] Post-beta: extend R13 qualification beyond the tested Ubuntu 24.04 guests: supported
   interpreter/distribution matrix and physical-host policy. Current live
   evidence is limited to the three tested Ubuntu 24.04 guests. Follow the
   [fresh-account test sequence](../docs/BOOTSTRAP.md):
@@ -111,7 +135,8 @@ sequence. Repository names are selected; creation and publication follow accepta
   service key unchanged and cleaned remote staging. After the mechanical
   repair, all three sequential reboots recovered peer links and zero-entry heal
   status before the next reboot. One independent missing-replica repair passed;
-  the latter used an empty synthetic file.
+  the earlier run used an empty synthetic file; the later 2026-09-27 beta pass
+  used a nonempty file and checked metadata after fixing staging ownership.
 - [x] Fix deploy-script preview/preflight side effects locally (2026-09-20):
   health refresh only after copying, no implicit key generation, read-only
   remote probes, verified host keys and early custom-layout refusal. Nine
