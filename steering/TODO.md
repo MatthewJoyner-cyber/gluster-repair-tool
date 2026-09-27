@@ -1,7 +1,7 @@
 # Project TODO
 
-Use [release preparation](../docs/RELEASE_PREPARATION.md) for the final pre-push
-sequence. Repository names are selected; creation and publication follow acceptance.
+Use [release preparation](../docs/RELEASE_PREPARATION.md) for the publication
+sequence. Verify both repository destinations and selected release revisions.
 
 ## First-beta queue (2026-09-27)
 

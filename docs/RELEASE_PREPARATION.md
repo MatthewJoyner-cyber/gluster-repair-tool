@@ -5,9 +5,9 @@ acceptance scope and supersedes treating every historical qualification gap
 as a first-publication blocker. This is a best-effort beta, tested on the stated
 Ubuntu LTS baseline, with no exhaustive-coverage or reliability guarantee.
 
-The local candidates are being prepared before the first GitHub push. The
-owner-approved destination names are recorded in [MAINTAINERS.md](../MAINTAINERS.md);
-they are planned destinations, not a claim that either repository is online.
+The separate GitHub destinations are recorded in
+[MAINTAINERS.md](../MAINTAINERS.md). Apply these checks to the exact source
+revision selected for publication or a later prerelease.
 The original repository and its ledger remain private reference material.
 
 ## Local preparation
@@ -25,7 +25,7 @@ The original repository and its ledger remain private reference material.
 - Keep remote creation and push separate from local preparation. The companion
   remains optional; the core must work without its skills or private settings.
 
-## Final pre-push checkpoint
+## Publication checkpoint
 
 1. Complete checkpoints A-C in the first-beta plan: review known safety fixes,
    one focused current-candidate pass, and the final source/companion audit.
@@ -39,10 +39,9 @@ The original repository and its ledger remain private reference material.
 4. Create the first completed-review tag only after its remediation is
    implemented and validated. Record the reviewed scope; a tag alone is not
    acceptance of every platform or repair case.
-5. When the owner authorizes publication, create the two empty GitHub
-   repositories, verify each destination, and push only each clean repository's
-   reviewed branch and deliberately selected tags. Recheck cross-repository
-   links once the destinations exist.
+5. Verify both GitHub destinations, push only clean reviewed branches and
+   deliberately selected tags, and check cross-repository and public-download
+   links before announcing the release.
 
 Read [MIGRATION.md](../MIGRATION.md) for source/state cutover. Final tests may
 require fixes; rerun the checks affected by those changes before publication.

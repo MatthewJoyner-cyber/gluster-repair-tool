@@ -7,9 +7,9 @@
 
 No public support contact has been selected.
 
-## Planned project repositories
+## Project repositories
 
-Owner-approved destinations, not yet published:
+Owner-approved GitHub destinations:
 
 - Core: `MatthewJoyner-cyber/gluster-repair-tool` on GitHub.
 - Companion: `MatthewJoyner-cyber/gluster-repair-agent` on GitHub.

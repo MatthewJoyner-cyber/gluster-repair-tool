@@ -1,10 +1,14 @@
 # Gluster Repair Tool
 
-GlusterFS evidence collection, repair planning, and guided recovery tooling.
+GlusterFS evidence collection, heal and split-brain diagnosis, repair planning,
+and guided recovery tooling. When normal Gluster healing leaves an object
+unresolved, the tool gathers brick and heal metadata, builds a reviewable
+plan, and guides an operator through the supported recovery path. It does not
+replace native healing.
 Version: `0.1.0` beta. Copyright holder: see
 [MAINTAINERS.md](MAINTAINERS.md). License: [GPL-2.0-only](COPYING).
 
-**Pre-release: publication checks remain open.** On a
+**Beta scope is limited.** On a
 disposable Ubuntu 24.04/Gluster 11.1 replica-3 lab, one supervised nonempty
 missing-replica restore preserved content, GFID, ownership, mode and a user
 xattr after a staging defect was fixed. This is a narrow repair proof; other
@@ -18,12 +22,43 @@ The [implementation history](HISTORY.md) summarizes the private
 predecessor's design discoveries without importing its ledger. Future change
 details belong in Git commits.
 
-## What is implemented
+## Quick start
+
+Start with a healthy, accessible cluster and try Gluster's native healing
+first. On the tested Ubuntu 24.04 LTS / Gluster 11.1 combination, install the
+tool and its restricted service account as described in the
+[bootstrap guide](docs/BOOTSTRAP.md). From a source checkout, the first
+tool commands are:
+
+```bash
+python3 gluster-manager.py --help
+python3 gluster-manager.py health-check --volume example-volume
+python3 gluster-manager.py repair --volume example-volume --preview
+```
+
+Replace `example-volume` with your volume name. The health check queries the
+cluster; a repair preview may collect remote evidence and trigger mount
+lookups, so run it only against a cluster you administer. Review the saved
+evidence and proposed actions before using the guided interactive flow:
+
+```bash
+python3 gluster-manager.py repair --volume example-volume --interactive
+```
+
+The interactive flow asks before ready-safe writes. The only live-qualified
+repair recipe for this beta is a supervised nonempty missing-replica restore
+on the stated lab baseline. Other write recipes remain experimental; full
+namespace healing and native-resolver tool writes are disabled. See the
+[compatibility profile](docs/GLUSTER_COMPATIBILITY.md) and
+[safety rules](steering/SAFETY_INVARIANTS.md) before executing any repair.
+
+## Capabilities
 
 - Manager/worker discovery of logical objects from heal rows, paths, GFIDs,
   GFID-child entries, or backend evidence.
 - Manifest, plan, apply-preview, decision cards, and bounded directory comparisons.
-- Guided repair, explicit execution, health/heal control, and verification.
+- Guided repair, explicit execution, health/heal control, and verification,
+  within the qualification limits above.
 - Backup/restore and canary commands, with the limitations in the open review.
 
 These are implemented interfaces, not guarantees that every branch is qualified.
@@ -112,8 +147,8 @@ repositories. See [the private/public boundary](docs/PRIVACY.md).
 
 ## Development and release
 
-- [Release preparation](docs/RELEASE_PREPARATION.md): local readiness and final
-  pre-push gates. Planned repository destinations are in [MAINTAINERS.md](MAINTAINERS.md).
+- [Release preparation](docs/RELEASE_PREPARATION.md): local readiness and
+  publication gates. Repository destinations are in [MAINTAINERS.md](MAINTAINERS.md).
 - [Current TODO](steering/TODO.md): unresolved implementation and release work.
 - [Implementation history](HISTORY.md): frozen prehistory and discoveries.
 - [Validation](docs/VALIDATION.md): checks for this migration candidate.
@@ -135,6 +170,6 @@ Canary heal visibility requires an [exact parsed row](docs/HEAL_ROW_MATCHING.md)
 The private predecessor is a reference archive. Local development checkpoints
 start from this sanitized source tree; no original Git database, tags, remotes
 or author metadata are imported. The signed completed-review tag records the
-bounded beta scope; publication still waits for the remaining release checks.
+bounded beta scope; publication requires the remaining release checks.
 Do not copy the
 private archive, personal configuration, runtime artifacts, or ledgers.

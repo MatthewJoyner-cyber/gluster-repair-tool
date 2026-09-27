@@ -26,9 +26,10 @@ are the acceptance standard. Neither exhaustive coverage nor proof that every
 possible failure is prevented is required. Known serious defects still need
 a fix or exclusion of the affected feature from the release scope.
 
-Proposed public designation: version 0.1.0, explicitly marked beta, with a
-`v0.1.0-beta.1` release tag and GitHub prerelease in each repository. Verify
-CLI, plugin and release metadata agree on this designation before tagging.
+Public designation: version 0.1.0, explicitly marked beta. The privately
+staged `v0.1.0-beta.1` tags mark the earlier candidate; use
+`v0.1.0-beta.2` for the final README and metadata revision in each repository.
+Verify CLI, plugin and release metadata agree on this designation before tagging.
 The core works independently; the companion explains and invokes its interfaces.
 
 The intended audience is administrators willing to review evidence and plans,
