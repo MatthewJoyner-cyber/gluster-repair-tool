@@ -52,6 +52,40 @@ are untested. The operator resumed release work after the earlier lab pause.
   [compatibility scope](../docs/GLUSTER_COMPATIBILITY.md); revisit either case
   if a relevant operator report or existing fixture becomes available.
 
+## Final Gluster 11 compatibility hardening
+
+Review since signed `review-complete-2026-09-27` marker: five core commits and
+one companion documentation commit. Core runtime changes since that marker are
+the nonblocking pre-10 warning in the health check; the other core changes are
+documentation and a replica-2 volume-type refusal test. Focused compatibility,
+health and volume tests passed (30 tests, 2026-09-27). The existing 11.1
+replica-3 live proofs still apply to their stated scope. This review does not
+expand the beta repair-write claim or qualify every Gluster 11.x release.
+
+- [ ] Run **one** replica-2 smoke on the retained Ubuntu 24.04 / Gluster 11.1
+  disposable VMs. Create a separate two-brick volume; record actual `volume
+  info` type, brick count, connected/quiet heal output, and the installed
+  tool's health-check and read-only preview on one healthy file. If Gluster
+  reports `Distributed-Replicate`, verify the tool refuses it; do not infer
+  `Replicate` from `1 x 2`. Remove only this fixture, verify the existing lab
+  volumes stayed quiet, and shut the guests down. No repair write or split-brain
+  injection is needed for this topology check.
+- [ ] On the final selected candidate, repeat one installed **read-only**
+  replica-3 health-check and zero-action preview. This covers the health-report
+  change added after the last live deployment. Reuse the already completed
+  nonempty restore, ghost and directory cycles; do not replay their writes.
+- [ ] Compare the tool-facing Gluster 10-to-11 contracts used by these checks:
+  version, volume type/brick layout, heal-info counts and connection state,
+  status, and worker metadata. Reuse existing 10.x development evidence and
+  11.1 fixtures; add a parser fixture only for an actual output difference.
+  Leave full-heal and native-resolver execution gated. Do not run a full
+  canary regression, create a new fault recipe, or treat untested 11.2 as
+  qualified merely because it is in the same major line.
+- [x] Create a reusable [major-version qualification guide](../docs/MAJOR_VERSION_QUALIFICATION.md)
+  and matching optional companion skill. The final Gluster 11 checks above
+  remain open; future major-version reviews should use the same focused method
+  and make only evidence-backed claims (2026-09-27).
+
 ## Implementation evidence and follow-up backlog
 
 - [x] Implement R1 saved execution-origin binding and refusal tests in the

@@ -157,6 +157,8 @@ repositories. See [the private/public boundary](docs/PRIVACY.md).
 - [Current TODO](steering/TODO.md): unresolved implementation and release work.
 - [Implementation history](HISTORY.md): frozen prehistory and discoveries.
 - [Validation](docs/VALIDATION.md): checks for this migration candidate.
+- [New Gluster major version](docs/MAJOR_VERSION_QUALIFICATION.md): focused
+  compatibility qualification without replaying every historical canary.
 - [Migration guide](MIGRATION.md): two independent repositories and private state.
 - [Source provenance](PROVENANCE.md): public ownership and contribution record.
 - [Safety invariants](steering/SAFETY_INVARIANTS.md): required repair contracts.

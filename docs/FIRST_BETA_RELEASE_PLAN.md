@@ -93,16 +93,18 @@ reuse a result if its implementation and environment remain relevant.
 | Installation and service restrictions | Three fresh Ubuntu guests, real sudoers, six directed SSH logins, reinstall and installer failure cases | Do not rebuild a fresh OS just to repeat unchanged installation behavior |
 | Execution identity | Installed CLI refused recreated-volume identity and changed data with preserved size/mtime | Review the fix and current refusal tests; no new volume-recreation experiment unless affected code changes |
 | Backup maintenance | Privileged remote archive/verification/restore preserved data and metadata, including ACLs, trusted xattrs and hardlinks | Reuse this proof; distinguish it from each repair recipe's original backup/rollback steps |
-| Mechanical repair | One missing-replica restore of an empty synthetic file, independently checked | Useful but insufficient for a nonempty payload claim; add one bounded current-candidate case |
+| Mechanical repair | One nonempty missing-replica restore passed on a fresh fixture after an ownership defect was fixed; later operator-seeded ghost and directory cycles reached zero-action previews | Advertise only the supervised nonempty restore as beta repair-write scope; retain the other cycles as compatibility evidence |
 | Native healing | Three recent metadata/ACL fixtures left zero pending entries after native healing | Record no remaining repair case observed on this setup; no forced repair required |
 | Full namespace heal | Gluster 11.1 accepted commands on a quiet volume and with a pending row; copies converged in the latter run | Concurrent native healing prevents attributing the repair to the full command; tool launch remains disabled for the first beta |
 | Native split-brain resolver | Synthetic success/tie/error and no-fallback tests; no live write qualification | Leave disabled for beta 1; remove its live qualification from release blockers |
 | Diagnostic projection | Ten saved workflow artifacts, AFR reads, arbiter topology and offline brick status; identifier scans passed | Use existing schemas; missing heal status stays unknown, not a reason to find another release for beta 1 |
 | Companion | 26 local tests, six-skill validation/lifecycle and recorded answer scenarios | Rerun affected guidance scenarios; repeat lifecycle only for relevant adapter/CLI changes |
 
-The latest metadata canary run refreshed selected canary modules in an existing
-guest candidate. It was not a deployment of the entire final source tree.
-Do not describe it as final-candidate repair acceptance.
+The nonempty restore used a complete 166-file installation. The later 167-file
+candidate changed directory transfer and backup commands, outside that live
+repair path. The subsequent pre-10 health warning was tested offline but was
+not deployed to the guests. Do not describe those later changes as live repair
+acceptance.
 
 ## Rationalized item 1: focused live acceptance
 
@@ -163,10 +165,9 @@ repair-qualified merely to close the checklist.
   work after beta feedback, with their own tests before enabling writes.
 - Hunting for an explicit disconnected `heal_info` field that this 11.1 setup
   omits. Current unknown-state handling and refusal are the required behavior.
-- The failed-directory-rename probe. It stopped before rename and its helper
-  built handle filenames from raw undashed GFID hex. This is a harness defect,
-  not evidence of a Gluster regression. Preserve it privately; it is outside
-  the first-beta acceptance path.
+- The failed-directory-rename probe. Its earlier stop-before-rename was a
+  harness GFID-path defect; after correction it passed as a scoped native
+  Gluster 11.1 observation. It is outside the first-beta repair acceptance path.
 - Repeating the complete installer/reboot matrix on unchanged code, new physical
   hardware or every Linux family. Add targeted tests when a relevant change
   or actual report justifies them.

@@ -80,3 +80,7 @@ volume and one with a pending row. In the latter run, all copies converged,
 but an active self-heal daemon may have performed the data heal independently.
 This does not qualify a repair effect attributable to the full command. The
 lab has not exercised a native split-brain resolver write path.
+
+For a future major release, use the focused
+[major-version qualification guide](MAJOR_VERSION_QUALIFICATION.md) before
+changing public claims or exact-version feature gates.
