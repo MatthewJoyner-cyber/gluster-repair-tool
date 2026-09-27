@@ -62,7 +62,7 @@ health and volume tests passed (30 tests, 2026-09-27). The existing 11.1
 replica-3 live proofs still apply to their stated scope. This review does not
 expand the beta repair-write claim or qualify every Gluster 11.x release.
 
-- [ ] Run **one** replica-2 smoke on the retained Ubuntu 24.04 / Gluster 11.1
+- [x] Run **one** replica-2 smoke on the retained Ubuntu 24.04 / Gluster 11.1
   disposable VMs. Create a separate two-brick volume; record actual `volume
   info` type, brick count, connected/quiet heal output, and the installed
   tool's health-check and read-only preview on one healthy file. If Gluster
@@ -70,21 +70,32 @@ expand the beta repair-write claim or qualify every Gluster 11.x release.
   `Replicate` from `1 x 2`. Remove only this fixture, verify the existing lab
   volumes stayed quiet, and shut the guests down. No repair write or split-brain
   injection is needed for this topology check.
-- [ ] On the final selected candidate, repeat one installed **read-only**
+  Completed 2026-09-27: 11.1 reported `Replicate`, `1 x 2 = 2`; installed
+  health check was ready (27/27), preview had zero actions, and both bricks
+  were connected with zero heal entries. Exact fixture removed; both retained
+  volumes quiet; guests shut off. See [validation](../docs/VALIDATION.md).
+- [x] On the final selected candidate, repeat one installed **read-only**
   replica-3 health-check and zero-action preview. This covers the health-report
   change added after the last live deployment. Reuse the already completed
   nonempty restore, ghost and directory cycles; do not replay their writes.
-- [ ] Compare the tool-facing Gluster 10-to-11 contracts used by these checks:
+  Completed 2026-09-27: 168 source hashes, 70 installed runtime hashes on
+  each guest; health ready (38/38), preview zero actions, heal quiet.
+- [x] Compare the tool-facing Gluster 10-to-11 contracts used by these checks:
   version, volume type/brick layout, heal-info counts and connection state,
   status, and worker metadata. Reuse existing 10.x development evidence and
   11.1 fixtures; add a parser fixture only for an actual output difference.
   Leave full-heal and native-resolver execution gated. Do not run a full
   canary regression, create a new fault recipe, or treat untested 11.2 as
   qualified merely because it is in the same major line.
+  Completed as an interface-level comparison on 2026-09-27. Existing 10-era
+  fixtures and new 11.1 live outputs showed no parser-contract change requiring
+  a new fixture. No complete raw 10.x transcript survives for a byte-level
+  diff, so only the observed 11.1 read-only path is newly qualified; native
+  command gates remain closed where previously gated.
 - [x] Create a reusable [major-version qualification guide](../docs/MAJOR_VERSION_QUALIFICATION.md)
-  and matching optional companion skill. The final Gluster 11 checks above
-  remain open; future major-version reviews should use the same focused method
-  and make only evidence-backed claims (2026-09-27).
+  and matching optional companion skill. The focused Gluster 11 checks above
+  are complete; future major-version reviews should use the same method and
+  make only evidence-backed claims (2026-09-27).
 
 ## Implementation evidence and follow-up backlog
 

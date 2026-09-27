@@ -32,20 +32,23 @@ follow-up. See [validation](VALIDATION.md). These were constructed faults with
 healing held off, not evidence that 11.1 has either naturally occurring defect.
 
 The [11.1 release notes](https://docs.gluster.org/en/main/release-notes/11.1/)
-list a volume-type display fix, but the linked
-[replica-2 report](https://github.com/gluster/glusterfs/issues/4107) still shows
-`Type: Distributed-Replicate` with `Number of Bricks: 1 x 2 = 2`. The lab's
-replica-3 volume reports `Replicate`, so it cannot validate that replica-2
-case. The tool trusts the reported type and refuses repair discovery when it
-is not exactly `Replicate`; it does not reinterpret a possibly mislabeled
-volume from its brick count. Replica-2 support under that output is therefore
-unqualified. Gluster 11.0 also lists a
+list a volume-type display fix. The linked
+[replica-2 report](https://github.com/gluster/glusterfs/issues/4107) shows
+`Type: Distributed-Replicate` with `Number of Bricks: 1 x 2 = 2`; our Ubuntu
+24.04 Gluster 11.1 lab instead reported `Type: Replicate` for a newly created
+two-brick volume. Its installed health check was ready and its healthy-file
+preview proposed zero actions. This is read-only topology evidence, not a
+replica-2 repair-write proof. The tool still trusts the reported type and
+refuses repair discovery when it is not exactly `Replicate`; it does not
+reinterpret a possibly mislabeled volume from its brick count. Gluster 11.0
+also lists a
 [replicated virtual-image healing issue](https://docs.gluster.org/en/main/release-notes/11.0/).
 No matching shipped canary was found, so no native-heal conclusion is drawn
 for that workload.
 
 | Feature | Gluster 11.1 qualification | Other versions |
 | --- | --- | --- |
+| Replica-2 read-only diagnosis | Healthy two-brick volume reported `Replicate`; installed health check ready and preview zero actions | Unqualified until an exact package/topology is checked |
 | Pending index heal | Scoped live canaries passed | Unqualified |
 | Full namespace heal | Quiet-volume smoke and a pending-row command observation passed; concurrent native healing leaves command causality unproved, so tool launch remains blocked | Unqualified; launch blocked |
 | Native per-file split-brain resolver | Response parser has synthetic tests; no live write proof, so execution is blocked before dispatch | Unqualified; execution blocked |

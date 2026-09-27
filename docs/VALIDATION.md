@@ -1,5 +1,38 @@
 # Migration candidate validation
 
+## Final installed Gluster 11.1 read-only compatibility pass (2026-09-27)
+
+The selected 168-file public source inventory was copied to the retained
+Ubuntu 24.04 lab. All source hashes matched on the controller, normal bootstrap
+and installation verification passed on three guests, and 70 installed runtime
+hashes matched on each guest. This includes the later pre-10 health warning.
+The validation and compatibility prose was updated after this staging run;
+those documentation-only edits did not change the 70 installed runtime files.
+On the existing healthy replica-3 volume, the installed health check was ready
+(38/38 checks, three hosts and three bricks online); a fresh read-only preview
+proposed zero actions. Heal info remained connected with zero entries on all
+three bricks before and after.
+
+A separate temporary two-brick replica was created solely for topology and
+read-only compatibility. Gluster 11.1 reported `Type: Replicate` and `Number of
+Bricks: 1 x 2 = 2`. Both bricks were connected and had zero heal entries. The
+installed tool's health check was ready (27/27 checks, two hosts and bricks
+online), and a healthy-file preview proposed zero actions. The fixture was
+unmounted and its exact volume and bricks removed. Both retained three-brick
+volumes then had three connected bricks and zero entries; all guests were
+gracefully shut off and retained. No replica-2 repair write or new fault
+builder was used.
+
+The tool-facing version, volume type/brick layout, status, heal-info count and
+connection checks were exercised by the installed 11.1 commands. Existing
+focused parser, health, preflight, diagnostic-metadata and worker tests passed
+against their historical and fail-closed fixtures. No changed 11.1 output shape
+required a new fixture. The original Gluster 10 development work provides the
+baseline assumptions, but no complete raw 10.x command transcript was retained
+for a byte-for-byte output diff. This result qualifies the observed 11.1
+read-only paths and preserves the earlier narrow replica-3 repair-cycle proof;
+it does not establish a new Gluster 10 or replica-2 write claim.
+
 ## Gluster 11.1 failed-rename GFID-handle check (2026-09-27)
 
 An existing disposable-lab probe exercised the

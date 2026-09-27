@@ -27,10 +27,14 @@ separate live evidence.
    normal bootstrap on a controlled lab, or reuse retained guests after
    verifying their identities and installed hashes. Verify healthy peer/brick
    state, then run a read-only health check and zero-action preview on a normal
-   replica volume. If claiming repair writes, use one existing representative
-   canary: let ordinary native healing finish first, then preview, review
-   backups and source agreement, execute once only if a durable safe case
-   remains, and independently check every affected brick. Test an additional
+   replica volume. For a repair-write claim, first let ordinary native healing
+   finish on an existing representative case. If it clears the case, record a
+   native-heal result and a zero-action tool preview. A separate mechanical
+   repair check may use an existing fault builder in an isolated lab with
+   healing temporarily held off. Label it operator-seeded, collect fresh tool
+   evidence independent of builder state, then review the preview, backups and
+   source agreement before one execution. Independently check every affected
+   brick, restore normal healing and confirm convergence. Test an additional
    topology, such as replica 2 or an arbiter, only for a stated claim or a
    relevant release-note concern. Do not manufacture new faults merely to
    increase coverage.

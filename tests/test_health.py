@@ -70,6 +70,11 @@ def _fake_heal_activity_result(
     return None
 
 class HealthTests(unittest.TestCase):
+    def setUp(self) -> None:
+        version = patch("gluster_heal_tool.health.get_gluster_version", return_value="11.1")
+        version.start()
+        self.addCleanup(version.stop)
+
     def test_structured_self_heal_status_rejects_malformed_xml_for_text_fallback(self) -> None:
         with patch(
             "gluster_heal_tool.health._run_local_with_sudo_fallback",
@@ -266,7 +271,8 @@ rick                                          53038     0          Y       10471
                 return {"ok": True, "returncode": 0, "stdout": "Filesystem 1B-blocks Used Available Use% Mounted on\n/dev/sda 100 10 90 10% /gluster/gtest3a/gtest3a/brick\n", "stderr": ""}
             raise AssertionError(command)
 
-        with patch("gluster_heal_tool.health.get_volume_info", return_value=volume_info), patch(
+        with patch("gluster_heal_tool.health.get_gluster_version", return_value="9.6"), patch(
+            "gluster_heal_tool.health.get_volume_info", return_value=volume_info), patch(
             "gluster_heal_tool.health.get_heal_settings",
             return_value={
                 "cluster.self-heal-daemon": "on",
@@ -286,6 +292,9 @@ rick                                          53038     0          Y       10471
         self.assertTrue(report["summary"]["ready"])
         self.assertEqual(3, report["summary"]["bricks_online"])
         self.assertEqual([], report["summary"]["blockers"])
+        self.assertEqual("9.6", report["gluster_version"])
+        self.assertIn("no compatibility claim", " | ".join(report["summary"]["warnings"]))
+        self.assertIn("Health check: ready", render_volume_health_summary(report))
 
     def test_build_volume_health_report_warns_when_self_heal_daemon_is_off(self) -> None:
         volume_info = """Volume Name: gtest
