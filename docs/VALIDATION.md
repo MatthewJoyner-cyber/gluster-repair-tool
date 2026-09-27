@@ -65,6 +65,29 @@ bounded results. This proves command acceptance on a quiet volume, not repair
 of pending entries or split-brain resolution. The full-heal feature flag remains
 blocked. The fixed lab helper passed 15 local behavior/refusal tests before use.
 
+## Gluster 11.1 pending-row full-heal observation (2026-09-27)
+
+On the same disposable replica-3 lab, a fresh file was created through the
+Gluster mount and checked independently on all three bricks. With one brick
+temporarily offline, the mounted file was changed; after the brick returned,
+fresh `gluster volume heal <volume> info` output showed the file pending on
+two connected bricks (entry counts 1, 1, 0). A manually issued full-heal
+command returned success. Subsequent heal info showed zero entries on all
+three connected bricks. Independent brick checks found the changed digest,
+GFID, UID/GID and mode agreeing on all three copies. The self-heal log recorded
+a data heal for that GFID and a full sweep during the same interval.
+
+The self-heal daemon was active, so this run cannot isolate the full-heal
+command from concurrent native healing. It proves the command accepted a
+volume with a pending row and that the copies converged; it does not prove
+that the full command caused the repair or qualify the tool's full-heal launch.
+The feature gate remains closed. The exact canary was removed through the
+mount, both lab volumes returned to three connected bricks with zero entries,
+and the three guests were gracefully shut down and retained. An earlier
+fixture attempt stopped before any brick outage or write because the client
+mount had not persisted across the VM restart; the successful case used a
+fresh one-shot fixture after remounting.
+
 ## Shared heal-dispatch gate (2026-09-26)
 
 The shared pending-index and full-namespace heal functions now check the exact

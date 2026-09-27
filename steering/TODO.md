@@ -124,8 +124,9 @@ are untested. The operator resumed release work after the earlier lab pause.
   controlled disposable canaries before adding those exact version/feature
   pairs to the compatibility profile. Other Gluster releases need their own
   output fixtures and live command checks. Keep the current write gates in
-  place until those results are reviewed. A Gluster 11.1 quiet-volume full-heal
-  command smoke passed on 2026-09-27; no pending repair effect was tested.
+  place until those results are reviewed. Gluster 11.1 accepted a full-heal
+  command with a pending row and converged copies on 2026-09-27, but active
+  native healing leaves command causality unresolved.
 - [ ] Post-beta: extend R13 qualification beyond the tested Ubuntu 24.04 guests: supported
   interpreter/distribution matrix and physical-host policy. Current live
   evidence is limited to the three tested Ubuntu 24.04 guests. Follow the

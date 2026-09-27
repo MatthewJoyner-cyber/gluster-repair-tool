@@ -16,7 +16,7 @@ Untested versions are unqualified, not automatically known to be incompatible.
 | Feature | Gluster 11.1 qualification | Other versions |
 | --- | --- | --- |
 | Pending index heal | Scoped live canaries passed | Unqualified |
-| Full namespace heal | Quiet-volume command smoke passed, but no pending repair effect was tested; tool launch remains blocked | Unqualified; launch blocked |
+| Full namespace heal | Quiet-volume smoke and a pending-row command observation passed; concurrent native healing leaves command causality unproved, so tool launch remains blocked | Unqualified; launch blocked |
 | Native per-file split-brain resolver | Response parser has synthetic tests; no live write proof, so execution is blocked before dispatch | Unqualified; execution blocked |
 | Heal-info connection state | Connected sections and an offline section lacking `Status` were observed; only explicit connected states can establish a complete post-repair check | Require the same recognized output shape; other releases still need live qualification |
 
@@ -44,7 +44,8 @@ To qualify another version or feature, record the exact installed version and
 command form privately, capture connected/offline and success/failure outputs
 on disposable volumes, add parser fixtures for unfamiliar shapes, and repeat
 the bounded live command test. Only then add the exact version/feature pair to
-the profile. The Gluster 11.1 lab accepted one full-heal command on a connected
-volume with zero pending entries and returned to the same quiet state. This
-does not qualify a full-heal repair effect. The lab has not exercised a native
-split-brain resolver write path.
+the profile. The Gluster 11.1 lab accepted full-heal commands on both a quiet
+volume and one with a pending row. In the latter run, all copies converged,
+but an active self-heal daemon may have performed the data heal independently.
+This does not qualify a repair effect attributable to the full command. The
+lab has not exercised a native split-brain resolver write path.

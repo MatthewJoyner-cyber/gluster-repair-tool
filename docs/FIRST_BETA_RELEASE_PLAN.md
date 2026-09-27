@@ -92,7 +92,7 @@ reuse a result if its implementation and environment remain relevant.
 | Backup maintenance | Privileged remote archive/verification/restore preserved data and metadata, including ACLs, trusted xattrs and hardlinks | Reuse this proof; distinguish it from each repair recipe's original backup/rollback steps |
 | Mechanical repair | One missing-replica restore of an empty synthetic file, independently checked | Useful but insufficient for a nonempty payload claim; add one bounded current-candidate case |
 | Native healing | Three recent metadata/ACL fixtures left zero pending entries after native healing | Record no remaining repair case observed on this setup; no forced repair required |
-| Full namespace heal | Gluster 11.1 accepted a command on a quiet volume | Command smoke only; no pending-effect claim; tool launch remains disabled for beta 1 |
+| Full namespace heal | Gluster 11.1 accepted commands on a quiet volume and with a pending row; copies converged in the latter run | Concurrent native healing prevents attributing the repair to the full command; tool launch remains disabled for the first beta |
 | Native split-brain resolver | Synthetic success/tie/error and no-fallback tests; no live write qualification | Leave disabled for beta 1; remove its live qualification from release blockers |
 | Diagnostic projection | Ten saved workflow artifacts, AFR reads, arbiter topology and offline brick status; identifier scans passed | Use existing schemas; missing heal status stays unknown, not a reason to find another release for beta 1 |
 | Companion | 26 local tests, six-skill validation/lifecycle and recorded answer scenarios | Rerun affected guidance scenarios; repeat lifecycle only for relevant adapter/CLI changes |
