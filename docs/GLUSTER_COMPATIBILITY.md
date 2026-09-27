@@ -31,6 +31,19 @@ child-gap repair cycles, including an independently verified directory `mdata`
 follow-up. See [validation](VALIDATION.md). These were constructed faults with
 healing held off, not evidence that 11.1 has either naturally occurring defect.
 
+The [11.1 release notes](https://docs.gluster.org/en/main/release-notes/11.1/)
+list a volume-type display fix, but the linked
+[replica-2 report](https://github.com/gluster/glusterfs/issues/4107) still shows
+`Type: Distributed-Replicate` with `Number of Bricks: 1 x 2 = 2`. The lab's
+replica-3 volume reports `Replicate`, so it cannot validate that replica-2
+case. The tool trusts the reported type and refuses repair discovery when it
+is not exactly `Replicate`; it does not reinterpret a possibly mislabeled
+volume from its brick count. Replica-2 support under that output is therefore
+unqualified. Gluster 11.0 also lists a
+[replicated virtual-image healing issue](https://docs.gluster.org/en/main/release-notes/11.0/).
+No matching shipped canary was found, so no native-heal conclusion is drawn
+for that workload.
+
 | Feature | Gluster 11.1 qualification | Other versions |
 | --- | --- | --- |
 | Pending index heal | Scoped live canaries passed | Unqualified |

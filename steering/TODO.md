@@ -38,17 +38,19 @@ are untested. The operator resumed release work after the earlier lab pause.
 - [x] Warn during precheck for a recognized Gluster major version below 10,
   without blocking evidence collection. Document the Gluster 10 development
   baseline and no pre-10 compatibility claim (2026-09-27; offline tests).
-- [ ] After the repair-cycle sample, review existing probes against the
+- [x] After the repair-cycle sample, review existing probes against the
   [11.0](https://docs.gluster.org/en/main/release-notes/11.0/) and
   [11.1](https://docs.gluster.org/en/main/release-notes/11.1/) fixes.
   The existing failed-directory-rename probe now passes after correcting its
   GFID handle-path assumption (#2752; see [validation](../docs/VALIDATION.md)).
   [Volume-type CLI output #4107](https://github.com/gluster/glusterfs/issues/4107)
-  remains an open upstream issue for some
-  replica-2 descriptions; the current replica-3 lab reports `Replicate`, but
-  that is not the same topology. Treat 11.0's replicated-image healing entry as
-  a native-heal question only if a matching existing fixture is available; do
-  not create a new canary merely to recreate an upstream-fixed bug.
+  remains an open upstream report for replica-2 descriptions; the current
+  replica-3 lab cannot settle that topology. A regression test confirms that
+  the reported `Distributed-Replicate` form is refused before repair discovery.
+  No existing shipped fixture matches 11.0's replicated virtual-image healing
+  entry, so that native-heal behavior remains untested. See
+  [compatibility scope](../docs/GLUSTER_COMPATIBILITY.md); revisit either case
+  if a relevant operator report or existing fixture becomes available.
 
 ## Implementation evidence and follow-up backlog
 

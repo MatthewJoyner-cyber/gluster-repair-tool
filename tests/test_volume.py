@@ -124,6 +124,19 @@ Brick4: node-a:/gluster/gtest4-secondary/brick
             with self.assertRaisesRegex(RuntimeError, "single brick path per host"):
                 discover_brick_paths("gtest4")
 
+    def test_discover_brick_paths_rejects_reported_distributed_replicate(self) -> None:
+        # Gluster #4107 reported this type for a two-brick replica (1 x 2).
+        volume_info = """Volume Name: replica2
+Type: Distributed-Replicate
+Number of Bricks: 1 x 2 = 2
+Bricks:
+Brick1: node-a:/bricks/replica2
+Brick2: node-b:/bricks/replica2
+"""
+        with patch("gluster_heal_tool.volume.get_volume_info", return_value=volume_info):
+            with self.assertRaisesRegex(RuntimeError, "only pure Replicate volumes"):
+                discover_brick_paths("replica2")
+
     def test_discover_brick_paths_uses_cached_layout_cache_aliases(self) -> None:
         report = {
             "volume": "gtest3a",
