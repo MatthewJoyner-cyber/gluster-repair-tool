@@ -194,7 +194,8 @@ Brick host-b:/srv/gluster/brick-store/gtest     49153     N/A        Y       234
                 return {"ok": True, "returncode": 0, "stdout": "Filesystem 1B-blocks Used Available Use% Mounted on\n/dev/sda 100 10 90 10% /srv/gluster/brick-store/gtest\n", "stderr": ""}
             raise AssertionError(command)
 
-        with patch("gluster_heal_tool.health.get_volume_info", return_value=volume_info), patch(
+        with patch("gluster_heal_tool.health.get_gluster_version", return_value="9.6"), patch(
+            "gluster_heal_tool.health.get_volume_info", return_value=volume_info), patch(
             "gluster_heal_tool.health.get_heal_settings",
             return_value={
                 "cluster.self-heal-daemon": "on",
@@ -219,6 +220,8 @@ Brick host-b:/srv/gluster/brick-store/gtest     49153     N/A        Y       234
         self.assertFalse(report["summary"]["ready"])
         self.assertIn("brick path has no mounted ancestor on host-b", " | ".join(report["summary"]["blockers"]))
         self.assertIn("Health check: blocked", render_volume_health_summary(report))
+        self.assertIn("Gluster 9.6", render_volume_health_summary(report))
+        self.assertIn("no compatibility claim", " | ".join(report["summary"]["warnings"]))
 
     def test_build_volume_health_report_handles_wrapped_status_lines(self) -> None:
         volume_info = """Volume Name: gtest3a

@@ -1,5 +1,13 @@
 # Gluster version and output compatibility
 
+The tool was developed on Gluster 10.x. It is intended to work with Gluster 10
+and newer releases when their relevant interfaces behave as expected, but each
+version and feature still needs live qualification. The current controlled VM
+baseline is Ubuntu 24.04 with Gluster 11.1. **No compatibility claim is made
+for versions before Gluster 10**: older CLI, heal output, or resolver behavior
+may differ. A precheck displays a warning for a recognized version below 10;
+the warning does not block evidence collection.
+
 The controller records the installed `gluster --version` value for capability
 reporting. An exact version selects only features proved on that release in a
 disposable live lab. A numeric version by itself no longer makes every command
@@ -12,6 +20,16 @@ changed/deprecated interfaces, output and helper contracts, and behavior changes
 that invalidate a safety assumption. A Gluster bug fix that heals a former
 canary normally needs a scoped observation, not another forced repair case.
 Untested versions are unqualified, not automatically known to be incompatible.
+Minor updates within a major Gluster line are expected to preserve ordinary
+interfaces, but the tool's safety-sensitive native command gates still require
+an explicitly qualified version. The major-version boundary matters most for
+broader compatibility review; a minor release can still change an observed
+response or fix a fault that once required intervention.
+
+The 11.1 lab also completed existing operator-seeded ghost-handle and directory
+child-gap repair cycles, including an independently verified directory `mdata`
+follow-up. See [validation](VALIDATION.md). These were constructed faults with
+healing held off, not evidence that 11.1 has either naturally occurring defect.
 
 | Feature | Gluster 11.1 qualification | Other versions |
 | --- | --- | --- |

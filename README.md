@@ -5,14 +5,18 @@ and guided recovery tooling. When normal Gluster healing leaves an object
 unresolved, the tool gathers brick and heal metadata, builds a reviewable
 plan, and guides an operator through the supported recovery path. It does not
 replace native healing.
+Development began on Gluster 10.x. The tool targets Gluster 10 and newer,
+subject to the [per-feature compatibility checks](docs/GLUSTER_COMPATIBILITY.md);
+versions before 10 have no compatibility claim.
 Version: `0.1.0` beta. Copyright holder: see
 [MAINTAINERS.md](MAINTAINERS.md). License: [GPL-2.0-only](COPYING).
 
 **Beta scope is limited.** On a
 disposable Ubuntu 24.04/Gluster 11.1 replica-3 lab, one supervised nonempty
 missing-replica restore preserved content, GFID, ownership, mode and a user
-xattr after a staging defect was fixed. This is a narrow repair proof; other
-recipes are not covered by that live result. Use the current tree for
+xattr after a staging defect was fixed. Two further operator-seeded canaries
+exercised ghost-handle cleanup and a two-stage directory repair on 11.1; see
+[validation](docs/VALIDATION.md) for their limits. Use the current tree for
 development, offline analysis and explicitly scoped testing. See the
 [first-beta plan](docs/FIRST_BETA_RELEASE_PLAN.md) and
 [open review](steering/PRE_EXPORT_REVIEW.md) before repair writes.
@@ -45,9 +49,10 @@ evidence and proposed actions before using the guided interactive flow:
 python3 gluster-manager.py repair --volume example-volume --interactive
 ```
 
-The interactive flow asks before ready-safe writes. The only live-qualified
-repair recipe for this beta is a supervised nonempty missing-replica restore
-on the stated lab baseline. Other write recipes remain experimental; full
+The interactive flow asks before ready-safe writes. The beta's public
+repair-write scope remains a supervised nonempty missing-replica restore
+on the stated lab baseline. Other write recipes remain experimental despite
+the representative lab canaries above; full
 namespace healing and native-resolver tool writes are disabled. See the
 [compatibility profile](docs/GLUSTER_COMPATIBILITY.md) and
 [safety rules](steering/SAFETY_INVARIANTS.md) before executing any repair.

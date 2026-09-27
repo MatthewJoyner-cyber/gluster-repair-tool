@@ -8,6 +8,9 @@ after the earlier lab pause. Follow the live checklist before claiming acceptanc
 Current checkpoint: the one nonempty missing-replica test passed on a fresh
 fixture after a staging ownership defect was found and fixed. The first failed
 run and the successful retest are recorded in [VALIDATION.md](VALIDATION.md).
+Two later, shipped operator-seeded canaries completed ghost-handle cleanup and
+a two-stage directory repair on Gluster 11.1. They broaden representative
+compatibility evidence without expanding the beta's advertised write scope.
 Normal healing is restored and the retained guests are shut off. Local scope,
 source and privacy reviews passed and are marked by signed review tags in both
 clean repositories. GitHub publication and public-download checks remain open.

@@ -1,5 +1,35 @@
 # Migration candidate validation
 
+## Reused repair-cycle canaries on Gluster 11.1 (2026-09-27)
+
+Two existing canary builders were run on the retained Ubuntu 24.04, Gluster
+11.1 replica-3 VMs. These were deliberately constructed backend faults with
+healing held off, so their proof class is **operator-seeded live repair**, not
+evidence that Gluster 11.1 naturally leaves these faults unhealed. The installed
+candidate discovered each case from fresh brick/GFID or backend-path evidence,
+without using the builder's state as planning input.
+
+- **File-handle ghost:** One brick had a stale `.glusterfs` GFID handle whose
+  backlink did not resolve. A GFID-seeded preview proposed one backup-first
+  `cleanup_dead_gfid` action. Reviewed execution completed with no failed or
+  skipped steps. Independent inspection found the handle absent afterward;
+  a fresh preview proposed zero actions.
+- **Directory child gap:** Two bricks had the same child directory GFID and the
+  third lacked the child. A backend-path preview proposed one
+  `recreate_missing_directory_backend` action. After that action completed, a
+  fresh preview found the new copy lacked `trusted.glusterfs.mdata`; two source
+  copies agreed on its value. A reviewed `attach_directory_mdata` follow-up
+  completed. Independent checks then found matching GFID, empty child set and
+  `mdata` on all three bricks, and a final preview proposed zero actions.
+
+Both shipped named cleanup paths succeeded. Normal healing was restored,
+`gtest3` and `gtest3a` each showed three connected bricks and zero heal entries,
+and the VMs were shut down and retained. These two cycles add representative
+Gluster 11.1 compatibility evidence for the installed snapshot. They do not
+qualify every canary, a naturally persistent 11.1 failure, other distributions,
+or the new pre-10 warning code, which was not installed on the guests for these
+runs. The beta's advertised repair-write scope remains deliberately narrow.
+
 ## Source and companion checks after metadata fix (2026-09-27)
 
 The current 167-file source inventory passed an isolated file-only install

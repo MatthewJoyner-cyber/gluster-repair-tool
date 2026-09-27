@@ -30,6 +30,22 @@ are untested. The operator resumed release work after the earlier lab pause.
   result (2026-09-27).
 - [ ] D: Record reviewed commits/tags and publish both clean beta repositories
   after acceptance under existing authority. Follow the plan's launch checklist.
+- [x] Run a representative Gluster 11.1 repair-cycle sample with shipped
+  canaries: ghost-handle cleanup and two-stage directory child/mdata repair
+  both reached a zero-action rescan; named cleanup returned both volumes to
+  quiet state (2026-09-27). These were operator-seeded cases, not native-heal
+  regressions. See [validation](../docs/VALIDATION.md).
+- [x] Warn during precheck for a recognized Gluster major version below 10,
+  without blocking evidence collection. Document the Gluster 10 development
+  baseline and no pre-10 compatibility claim (2026-09-27; offline tests).
+- [ ] After the repair-cycle sample, review existing probes against the
+  [11.0](https://docs.gluster.org/en/main/release-notes/11.0/) and
+  [11.1](https://docs.gluster.org/en/main/release-notes/11.1/) fixes. Prioritize
+  11.1's failed-directory-rename GFID-handle fix (#2752) and volume-type CLI
+  output fix (#4107), using the existing lab probe after correcting its GFID
+  handle-path assumption. Treat 11.0's replicated-image healing entry as a
+  native-heal question only if a matching existing fixture is available; do
+  not create a new canary merely to recreate an upstream-fixed bug.
 
 ## Implementation evidence and follow-up backlog
 

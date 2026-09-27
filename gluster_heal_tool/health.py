@@ -21,11 +21,13 @@ from .install_paths import (
     DEFAULT_WORKER_PATH,
 )
 from .controller_paths import default_brick_layout_path
+from .gluster_compat import pre10_warning
 from .remote_ops import ssh_remote_command
 from .shared_io import write_json_shared
 from .volume import (
     ensure_supported_volume_type,
     get_heal_settings,
+    get_gluster_version,
     get_volume_info,
     parse_bricks,
     parse_brick_hosts,
@@ -711,6 +713,8 @@ def build_volume_health_report(
         "available": True,
         "error": "",
         "volume_type": "",
+        "gluster_version": "",
+        "gluster_version_warning": "",
         "hosts": [],
         "host_facts": [],
         "bricks": [],
@@ -777,6 +781,18 @@ def build_volume_health_report(
             "message": "" if report["volume_type"] == "Replicate" else "unsupported volume type",
         }
     )
+
+    try:
+        version = get_gluster_version()
+        report["gluster_version"] = version
+        version_warning = pre10_warning(version)
+        if version_warning:
+            report["gluster_version_warning"] = version_warning
+            warnings.append(version_warning)
+    except (RuntimeError, OSError):
+        # The existing health checks decide readiness. An unavailable version
+        # cannot justify either a pre-10 warning or a compatibility claim.
+        pass
 
     heal_daemon_enabled = False
     try:
@@ -1094,6 +1110,8 @@ def render_volume_health_summary(report: dict[str, Any]) -> str:
     warnings = summary.get("warnings") or []
     if warnings:
         parts.append(f"warnings={len(warnings)}")
+    if report.get("gluster_version_warning"):
+        parts.append(str(report["gluster_version_warning"]))
     error = str(report.get("error") or "").strip()
     if error:
         parts.append(f"error: {error}")

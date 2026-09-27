@@ -8,6 +8,7 @@ command succeeded or that an unfamiliar response has a known meaning.
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable
+import re
 
 
 QUALIFIED_FEATURES: dict[str, frozenset[str]] = {
@@ -19,6 +20,15 @@ QUALIFIED_FEATURES: dict[str, frozenset[str]] = {
 
 def feature_qualified(version: str, feature: str) -> bool:
     return feature in QUALIFIED_FEATURES.get(version.strip(), frozenset())
+
+
+def pre10_warning(version: str) -> str:
+    """Return a scope warning for recognized pre-10 versions, not a blocker."""
+    match = re.match(r"^(\d+)(?:\.|$)", version.strip())
+    if match and int(match.group(1)) < 10:
+        return (f"Gluster {version.strip()} predates the tool's Gluster 10 development baseline; "
+                "interfaces may differ and this version has no compatibility claim")
+    return ""
 
 
 def require_qualified_feature(feature: str, get_version: Callable[[], str], action: str) -> None:
