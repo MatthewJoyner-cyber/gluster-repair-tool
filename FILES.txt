@@ -162,6 +162,7 @@ tests/test_temp_mount.py
 tests/test_volume.py
 FILES.txt
 docs/RELEASE_PREPARATION.md
+docs/RELEASE_NOTES_v0.1.0-beta.3.md
 docs/FIRST_BETA_RELEASE_PLAN.md
 docs/CANARY_CASES.md
 gluster_heal_tool/execution_freshness.py

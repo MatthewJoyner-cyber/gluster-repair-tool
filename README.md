@@ -22,6 +22,8 @@ development, offline analysis and explicitly scoped testing. See the
 [open review](steering/PRE_EXPORT_REVIEW.md) before repair writes.
 
 Start with [Gluster: recovery limits and this tool](docs/GLUSTER_GUIDE.md).
+Read the [beta.3 release notes](docs/RELEASE_NOTES_v0.1.0-beta.3.md) for the
+tested scope and limits.
 The [implementation history](HISTORY.md) summarizes the private
 predecessor's design discoveries without importing its ledger. Future change
 details belong in Git commits.
@@ -177,6 +179,7 @@ Canary heal visibility requires an [exact parsed row](docs/HEAL_ROW_MATCHING.md)
 The private predecessor is a reference archive. Local development checkpoints
 start from this sanitized source tree; no original Git database, tags, remotes
 or author metadata are imported. The signed completed-review tag records the
-bounded beta scope; publication requires the remaining release checks.
+bounded beta scope; the release tag identifies the later documentation-frozen
+candidate.
 Do not copy the
 private archive, personal configuration, runtime artifacts, or ledgers.

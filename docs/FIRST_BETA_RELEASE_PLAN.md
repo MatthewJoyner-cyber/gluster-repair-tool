@@ -31,10 +31,11 @@ are the acceptance standard. Neither exhaustive coverage nor proof that every
 possible failure is prevented is required. Known serious defects still need
 a fix or exclusion of the affected feature from the release scope.
 
-Public designation: version 0.1.0, explicitly marked beta. The privately
-staged `v0.1.0-beta.1` tags mark the earlier candidate; use
-`v0.1.0-beta.2` for the final README and metadata revision in each repository.
-Verify CLI, plugin and release metadata agree on this designation before tagging.
+Public designation: version 0.1.0, explicitly marked beta. The beta.1 and
+beta.2 tags mark earlier private candidates. Use `v0.1.0-beta.3` in each
+repository for the first public prerelease, covering the final documentation
+and [release notes](RELEASE_NOTES_v0.1.0-beta.3.md). The CLI and plugin use the
+base version 0.1.0; the Git tag identifies the prerelease candidate.
 The core works independently; the companion explains and invokes its interfaces.
 
 The intended audience is administrators willing to review evidence and plans,
