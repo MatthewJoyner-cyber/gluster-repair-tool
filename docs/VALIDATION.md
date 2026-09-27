@@ -1,5 +1,19 @@
 # Migration candidate validation
 
+## First public beta publication (2026-09-27)
+
+The two independent clean repositories were made public after the scoped
+source, history, signing and privacy reviews. Signed `v0.1.0-beta.3` tags
+point to core `0e52b93` and companion `d442174`; both remote main branches
+matched those commits at publication. GitHub prerelease pages were created
+for the existing tags, with reviewed notes and explicit beta limits.
+Unauthenticated public API responses confirmed both releases were published,
+marked as prereleases and carried the intended notes. Source archives fetched
+without credentials matched the tagged local trees byte for byte: 169 core
+files and 47 companion files. This is publication/download verification, not
+a new runtime or repair-write qualification. Later documentation-only
+publication records on main do not move the release tags.
+
 ## Final installed Gluster 11.1 read-only compatibility pass (2026-09-27)
 
 The selected 168-file public source inventory was copied to the retained

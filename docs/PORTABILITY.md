@@ -42,4 +42,4 @@ install paths and what its local installer checks. A local test cannot
 establish account creation, privileged ownership, `visudo` acceptance or
 behavior on a fresh deployed brick. Separate scoped VM checks now cover those
 installation properties; see [validation](VALIDATION.md) for the tested scope
-and the remaining release gates.
+and remaining qualification limits.

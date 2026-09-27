@@ -28,8 +28,12 @@ are untested. The operator resumed release work after the earlier lab pause.
   checks passed. Existing scenario/lifecycle evidence was reused because skill
   and adapter behavior did not change; public claims now match the scoped lab
   result (2026-09-27).
-- [ ] D: Record reviewed commits/tags and publish both clean beta repositories
-  after acceptance under existing authority. Follow the plan's launch checklist.
+- [x] D: Published both clean repositories and their signed
+  `v0.1.0-beta.3` prereleases on 2026-09-27. Unauthenticated public API checks
+  confirmed both releases are published prereleases; downloaded tag archives
+  matched all 169 core and 47 companion source files byte for byte. The signed
+  review tags remain distinct from the later documentation-frozen release tags.
+  See [validation](../docs/VALIDATION.md).
 - [x] Run a representative Gluster 11.1 repair-cycle sample with shipped
   canaries: ghost-handle cleanup and two-stage directory child/mdata repair
   both reached a zero-action rescan; named cleanup returned both volumes to

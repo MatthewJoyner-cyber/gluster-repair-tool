@@ -15,7 +15,10 @@ zero-action preview checks. These broaden compatibility evidence without
 expanding the beta's advertised write scope. Normal healing is restored and
 the retained guests are shut off. Local scope, source and privacy reviews
 passed and are marked by signed review tags in both clean repositories.
-Public visibility, prerelease publication and download checks remain open.
+Both clean repositories were made public on 2026-09-27 with signed beta.3
+prereleases. Unauthenticated archive and public release-metadata checks passed;
+see [validation](VALIDATION.md). This plan remains the scope record for that
+first beta, not a claim that deferred features were qualified.
 
 ## Release objective
 
