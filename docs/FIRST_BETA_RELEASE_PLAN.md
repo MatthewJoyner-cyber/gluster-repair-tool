@@ -9,11 +9,13 @@ Current checkpoint: the one nonempty missing-replica test passed on a fresh
 fixture after a staging ownership defect was found and fixed. The first failed
 run and the successful retest are recorded in [VALIDATION.md](VALIDATION.md).
 Two later, shipped operator-seeded canaries completed ghost-handle cleanup and
-a two-stage directory repair on Gluster 11.1. They broaden representative
-compatibility evidence without expanding the beta's advertised write scope.
-Normal healing is restored and the retained guests are shut off. Local scope,
-source and privacy reviews passed and are marked by signed review tags in both
-clean repositories. GitHub publication and public-download checks remain open.
+a two-stage directory repair on Gluster 11.1. The later 168-file candidate was
+installed on all guests and passed replica-3 and replica-2 read-only health and
+zero-action preview checks. These broaden compatibility evidence without
+expanding the beta's advertised write scope. Normal healing is restored and
+the retained guests are shut off. Local scope, source and privacy reviews
+passed and are marked by signed review tags in both clean repositories.
+Public visibility, prerelease publication and download checks remain open.
 
 ## Release objective
 
@@ -48,7 +50,7 @@ major distributions without implying those environments were tested.
 
 | Combination | First-beta status | Next action |
 | --- | --- | --- |
-| Ubuntu 24.04 LTS, amd64, Python 3.12.3, Gluster 11.1, XFS lab bricks, replica 3 | Primary tested baseline; one nonempty missing-replica restore passed after a defect fix; final candidate checks still required | Complete the finite checklist below |
+| Ubuntu 24.04 LTS, amd64, Python 3.12.3, Gluster 11.1, XFS lab bricks, replica 3 | Primary tested baseline; one nonempty missing-replica restore passed after a defect fix; later installed candidate passed read-only health and zero-action preview | Keep the write claim narrow and complete publication checks below |
 | Replica-3 arbiter on the same Ubuntu baseline | Scoped topology/diagnostic evidence only | Preserve arbiter payload-source refusal; do not imply repair acceptance |
 | Ubuntu 26.04 LTS with distribution Gluster 11.2 | Next qualification target; untested by this tool | Review interface/packaging differences, then run the focused compatibility suite after beta 1 |
 | Other maintained Ubuntu LTS combinations | Not automatically qualified | Add only when useful to users and independently tested |
@@ -89,7 +91,7 @@ reuse a result if its implementation and environment remain relevant.
 
 | Area | Evidence already recorded | Beta consequence |
 | --- | --- | --- |
-| Core offline behavior and packaging | 858 tests on the latest recorded full audit, one ACL-dependent skip; isolated state, source hashes, installed file parity, help and privacy checks | Repeat once on the frozen final candidate; explain the skip |
+| Core offline behavior and packaging | Complete offline suite passed on the current source; the earlier counted audit had 858 tests with one ACL-dependent skip; isolated state, source hashes, installed file parity, help and privacy checks passed | Preserve the exact final-source audit and explain any environment skip |
 | Installation and service restrictions | Three fresh Ubuntu guests, real sudoers, six directed SSH logins, reinstall and installer failure cases | Do not rebuild a fresh OS just to repeat unchanged installation behavior |
 | Execution identity | Installed CLI refused recreated-volume identity and changed data with preserved size/mtime | Review the fix and current refusal tests; no new volume-recreation experiment unless affected code changes |
 | Backup maintenance | Privileged remote archive/verification/restore preserved data and metadata, including ACLs, trusted xattrs and hardlinks | Reuse this proof; distinguish it from each repair recipe's original backup/rollback steps |
@@ -98,13 +100,13 @@ reuse a result if its implementation and environment remain relevant.
 | Full namespace heal | Gluster 11.1 accepted commands on a quiet volume and with a pending row; copies converged in the latter run | Concurrent native healing prevents attributing the repair to the full command; tool launch remains disabled for the first beta |
 | Native split-brain resolver | Synthetic success/tie/error and no-fallback tests; no live write qualification | Leave disabled for beta 1; remove its live qualification from release blockers |
 | Diagnostic projection | Ten saved workflow artifacts, AFR reads, arbiter topology and offline brick status; identifier scans passed | Use existing schemas; missing heal status stays unknown, not a reason to find another release for beta 1 |
-| Companion | 26 local tests, six-skill validation/lifecycle and recorded answer scenarios | Rerun affected guidance scenarios; repeat lifecycle only for relevant adapter/CLI changes |
+| Companion | 26 local tests, seven skill validators, exact package install/hash and fresh-session answer on Codex CLI 0.155.1; earlier update-path lifecycle proof on the same CLI | Recheck only if skill, adapter or CLI behavior changes |
 
 The nonempty restore used a complete 166-file installation. The later 167-file
 candidate changed directory transfer and backup commands, outside that live
-repair path. The subsequent pre-10 health warning was tested offline but was
-not deployed to the guests. Do not describe those later changes as live repair
-acceptance.
+repair path. The 168-file candidate, including the pre-10 health warning, was
+installed for read-only replica-3 and replica-2 checks, not for another repair
+write. Do not describe those later changes as live repair acceptance.
 
 ## Rationalized item 1: focused live acceptance
 
@@ -211,10 +213,14 @@ does it remove the need for operator review of current evidence and backups.
 
 ### B. Complete the focused current-candidate pass
 
-Perform item 1 above when lab work is resumed. Retain the exact candidate ID,
-test outcomes and private evidence pointers. The claimed repair scope must
-match the result. A passing empty-file or native-heal check is not nonempty
-repair proof. A deferred feature does not fail the release if it stays disabled.
+The lab work is resumed: the installed 168-file candidate passed final
+replica-3 and replica-2 read-only checks, while the older nonempty restore
+remains the narrow repair-write proof. Retain the exact candidate ID, test
+outcomes and private evidence pointers. Before publication, confirm that
+subsequent runtime changes did not affect that repair path or repeat its
+bounded write check if they did. A passing healthy or native-heal check is
+not nonempty repair proof. A deferred feature does not fail the release if it
+stays disabled.
 
 ### C. Freeze and audit both source releases
 
