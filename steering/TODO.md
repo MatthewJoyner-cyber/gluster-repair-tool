@@ -10,8 +10,10 @@ authority for scope; older open items below include post-beta work. Best-effort
 release, tested on the stated Ubuntu LTS baseline; other Linux distributions
 are untested. The operator resumed release work after the earlier lab pause.
 
-- [ ] A: Review R1-R13 fixes against current evidence and finalize enabled,
-  experimental and disabled feature claims; resolve known serious defects.
+- [x] A: Reviewed R1-R13 against current tests and scoped live evidence;
+  fixed the discovered staging metadata defect, distinguished the one
+  live-qualified repair recipe from other experimental writes, and kept
+  full-heal/native-resolver tool writes disabled (2026-09-27).
 - [x] B: Deployed the 166-file candidate, reviewed the installed preview,
   and completed one bounded nonempty-file repair on a fresh fixture after
   fixing an ownership defect found in the first attempt (2026-09-27).
@@ -20,8 +22,12 @@ are untested. The operator resumed release work after the earlier lab pause.
   off. A later 167-file update changed directory transfer and reference-backup
   commands, leaving the proved file path unchanged. Reuse unchanged installation,
   refusal and native-heal evidence.
-- [ ] C: Freeze both trees; run final core/companion checks and source/history
-  privacy review, then reconcile public beta scope and feedback instructions.
+- [x] C: Froze and audited both local trees: full core suite, 167-file source
+  inventory, 70 byte-identical installed files, links/notices/help, 26
+  companion tests, six skill validators, and current-tree/Git-history privacy
+  checks passed. Existing scenario/lifecycle evidence was reused because skill
+  and adapter behavior did not change; public claims now match the scoped lab
+  result (2026-09-27).
 - [ ] D: Record reviewed commits/tags and publish both clean beta repositories
   after acceptance under existing authority. Follow the plan's launch checklist.
 

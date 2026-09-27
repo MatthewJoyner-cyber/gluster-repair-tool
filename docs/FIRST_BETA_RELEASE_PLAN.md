@@ -181,6 +181,28 @@ Exit: no known unresolved data-loss, wrong-target, unsafe fallback/replay or
 privacy defect in the released scope; scope and visible capability/refusal
 messages agree. Optional coverage gaps have explicit deferrals below.
 
+Review result, 2026-09-27: R1-R13 implementation records were checked against
+the current source and passing offline suite. R1 has installed UUID/data-change
+refusal evidence; R2-R5 have current gate, dependency, unknown-outcome and
+journal regressions; R6-R8 have scoped backup, installer and host-helper lab
+evidence; R9-R10 retain conservative canary/row matching; R11-R12 keep support
+export metadata-only and report evidence logs; R13 has the isolated source and
+Ubuntu installation checks. The nonempty missing-replica live run exposed an
+ownership defect, which was fixed and retested on a fresh fixture. A source
+read found analogous transfer commands in directory paths; those now preserve
+numeric ownership, ACLs and user xattrs, with command tests passing. The
+directory change has no live repair-apply qualification.
+
+The beta's *live repair claim* is only the supervised nonempty file
+missing-replica recipe on the listed Ubuntu/Gluster combination. Other repair
+recipes remain accessible for expert review and disposable testing but are
+experimental; a ready preview is not evidence that a recipe was live-tested.
+The exact-version profile admits pending index heal on 11.1, while tool-driven
+full heal and native per-file resolver writes remain blocked at shared dispatch.
+This review found no remaining known data-loss, wrong-target, replay or privacy
+defect in the claimed path. It does not prove every exposed recipe safe, nor
+does it remove the need for operator review of current evidence and backups.
+
 ### B. Complete the focused current-candidate pass
 
 Perform item 1 above when lab work is resumed. Retain the exact candidate ID,
