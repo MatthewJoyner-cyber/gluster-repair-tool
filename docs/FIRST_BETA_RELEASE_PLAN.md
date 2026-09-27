@@ -8,8 +8,9 @@ after the earlier lab pause. Follow the live checklist before claiming acceptanc
 Current checkpoint: the one nonempty missing-replica test passed on a fresh
 fixture after a staging ownership defect was found and fixed. The first failed
 run and the successful retest are recorded in [VALIDATION.md](VALIDATION.md).
-Normal healing is restored and the retained guests are shut off. Freeze,
-privacy and publication checks remain open.
+Normal healing is restored and the retained guests are shut off. Local scope,
+source and privacy reviews passed and are marked by signed review tags in both
+clean repositories. GitHub publication and public-download checks remain open.
 
 ## Release objective
 

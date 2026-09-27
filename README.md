@@ -4,7 +4,7 @@ GlusterFS evidence collection, repair planning, and guided recovery tooling.
 Version: `0.1.0` beta. Copyright holder: see
 [MAINTAINERS.md](MAINTAINERS.md). License: [GPL-2.0-only](COPYING).
 
-**Pre-release: final review and publication checks remain open.** On a
+**Pre-release: publication checks remain open.** On a
 disposable Ubuntu 24.04/Gluster 11.1 replica-3 lab, one supervised nonempty
 missing-replica restore preserved content, GFID, ownership, mode and a user
 xattr after a staging defect was fixed. This is a narrow repair proof; other
@@ -134,6 +134,7 @@ Canary heal visibility requires an [exact parsed row](docs/HEAL_ROW_MATCHING.md)
 
 The private predecessor is a reference archive. Local development checkpoints
 start from this sanitized source tree; no original Git database, tags, remotes
-or author metadata are imported. Publication and a completed-review tag wait
-for the release gates. Do not copy the
+or author metadata are imported. The signed completed-review tag records the
+bounded beta scope; publication still waits for the remaining release checks.
+Do not copy the
 private archive, personal configuration, runtime artifacts, or ledgers.
