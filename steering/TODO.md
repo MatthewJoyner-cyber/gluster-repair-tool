@@ -94,7 +94,8 @@ sequence. Repository names are selected; creation and publication follow accepta
   controlled disposable canaries before adding those exact version/feature
   pairs to the compatibility profile. Other Gluster releases need their own
   output fixtures and live command checks. Keep the current write gates in
-  place until those results are reviewed.
+  place until those results are reviewed. A Gluster 11.1 quiet-volume full-heal
+  command smoke passed on 2026-09-27; no pending repair effect was tested.
 - [ ] Finish R13 qualification beyond the tested Ubuntu 24.04 guests: supported
   interpreter/distribution matrix and physical-host policy. Current live
   evidence is limited to the three tested Ubuntu 24.04 guests. Follow the

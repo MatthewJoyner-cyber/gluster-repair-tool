@@ -1,5 +1,16 @@
 # Migration candidate validation
 
+## Full-heal command smoke (2026-09-27)
+
+On a retained disposable three-guest Gluster 11.1 lab, a connected replica-3
+volume had zero pending entries on all three bricks before and after one
+`gluster volume heal <volume> full` command. Gluster returned success; peer
+links remained connected, a second lab volume stayed quiet, and no active
+volume task remained. The guests were shut down and retained after exporting
+bounded results. This proves command acceptance on a quiet volume, not repair
+of pending entries or split-brain resolution. The full-heal feature flag remains
+blocked. The fixed lab helper passed 15 local behavior/refusal tests before use.
+
 ## Shared heal-dispatch gate (2026-09-26)
 
 The shared pending-index and full-namespace heal functions now check the exact
