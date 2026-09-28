@@ -1,112 +1,121 @@
 # Gluster Repair Tool
 
-GlusterFS evidence collection, heal and split-brain diagnosis, repair planning,
-and guided recovery tooling. When normal Gluster healing leaves an object
-unresolved, the tool gathers brick and heal metadata, builds a reviewable
-plan, and guides an operator through the supported recovery path. It does not
-replace native healing.
-Development began on Gluster 10.x. The tool targets Gluster 10 and newer,
-subject to the [per-feature compatibility checks](docs/GLUSTER_COMPATIBILITY.md);
-versions before 10 have no compatibility claim.
-Version: `0.1.0` beta. Copyright holder: see
-[MAINTAINERS.md](MAINTAINERS.md). License: [GPL-2.0-only](COPYING).
+GlusterFS diagnosis, reviewable repair plans and guided recovery when normal
+healing leaves an object unresolved. The tool collects brick and heal metadata,
+then explains the evidence and proposed next step. Start with Gluster's native
+healing; this tool does not replace it.
 
-**Beta scope is limited.** On a
-disposable Ubuntu 24.04/Gluster 11.1 replica-3 lab, one supervised nonempty
-missing-replica restore preserved content, GFID, ownership, mode and a user
-xattr after a staging defect was fixed. Two further operator-seeded canaries
-exercised ghost-handle cleanup and a two-stage directory repair on 11.1; see
-[validation](docs/VALIDATION.md) for their limits. Use the current tree for
-development, offline analysis and explicitly scoped testing. See the
-[first-beta plan](docs/FIRST_BETA_RELEASE_PLAN.md) and
-[open review](steering/PRE_EXPORT_REVIEW.md) before repair writes.
+## Capabilities and limits
 
-Start with [Gluster: recovery limits and this tool](docs/GLUSTER_GUIDE.md).
-Read the [beta.3 release notes](docs/RELEASE_NOTES_v0.1.0-beta.3.md) for the
-tested scope and limits.
-The [implementation history](HISTORY.md) summarizes the private
-predecessor's design discoveries without importing its ledger. Future change
-details belong in Git commits.
+The tool links heal entries, paths and GFIDs to logical objects, builds
+reviewable repair plans, and offers guided decisions, backups and verification.
+Its main use case is **replica-3**: three data bricks, or two data bricks and an
+arbiter. It also accepts other volumes that Gluster reports as `Type: Replicate`,
+though those layouts have less live repair proof. An arbiter can help establish
+identity but is never a source of file contents. The bootstrap and repair paths
+reject other reported volume types, including `Distributed-Replicate` and
+dispersed volumes.
+
+This beta has one qualified repair-write path: a supervised nonempty
+missing-replica file restore on an Ubuntu 24.04 / Gluster 11.1 replica-3 lab.
+Other repair writes remain experimental; tool-driven full namespace heal and
+native per-file resolver writes are disabled. See [beta proof](#beta-scope) and
+the [compatibility profile](docs/GLUSTER_COMPATIBILITY.md) before a write.
+Depending on demand, future work may add `Distributed-Replicate` support, then
+consider dispersed or erasure-coded volumes and help with geo-replication
+recovery. Those are not supported today.
 
 ## Quick start
 
-Start with a healthy, accessible cluster and try Gluster's native healing
-first. On the tested Ubuntu 24.04 LTS / Gluster 11.1 combination, install the
-tool and its restricted service account as described in the
-[bootstrap guide](docs/BOOTSTRAP.md). From a source checkout, the first
-tool commands are:
+This path assumes an existing supported replica volume and an administrator on
+a Gluster node. Replace `example-volume` and `operator` with your volume and SSH
+login. The tested baseline is Ubuntu 24.04 LTS with Gluster 11.1.
+
+1. Finish normal Gluster healing and confirm you have a backup. On the
+   controller, set up an SSH key and verified host keys for every brick host.
+   The administrator login needs noninteractive sudo on those hosts; the
+   controller also needs access to `gluster volume info`. Follow the
+   [first-time setup steps](docs/BOOTSTRAP.md) if any of this is missing.
+2. From a checkout on that controller, check access, then install the tool and
+   its restricted `gluster-repair` service account on the volume's brick hosts:
+
+   ```bash
+   ./gluster-bootstrap-volume.sh -v example-volume -l operator --preflight
+   ./gluster-bootstrap-volume.sh -v example-volume -l operator
+   ```
+
+3. Use the **simple mode** for your first investigation. Preview gathers
+   evidence and proposes actions without repair writes:
+
+   ```bash
+   python3 gluster-manager.py repair --volume example-volume --preview
+   ```
+
+4. If a problem remains after native healing, review the preview, backups and
+   [beta limits](#beta-scope), then start the guided session in a terminal:
+
+   ```bash
+   python3 gluster-manager.py repair --volume example-volume --interactive
+   ```
+
+The guided session explains decisions and asks before eligible writes. Plain
+`repair --volume example-volume` also starts this simple flow when attached to
+a terminal; `--interactive` makes the choice explicit. A preview may contact
+hosts and mount paths, which can trigger Gluster healing, even though it does
+not execute repair writes. Run these commands only on a cluster you administer.
+For a separate health report, use
+`python3 gluster-manager.py health-check --volume example-volume`.
+
+## Beta scope
+
+The public repair-write claim is one supervised **nonempty missing-replica
+file restore** on a disposable Ubuntu 24.04 / Gluster 11.1 replica-3 lab. It
+preserved content, GFID, ownership, mode and a user xattr after a staging
+defect was fixed. Later operator-seeded ghost-handle and directory canaries
+completed, but they do not qualify every repair recipe. Other writes remain
+experimental; tool-driven full namespace heal and native per-file resolver
+writes are disabled. See [validation](docs/VALIDATION.md), the
+[compatibility profile](docs/GLUSTER_COMPATIBILITY.md), and
+[safety rules](steering/SAFETY_INVARIANTS.md) before a write.
+
+Development began on Gluster 10.x. The tool targets Gluster 10 and newer,
+subject to per-feature gates; it makes no claim for earlier versions. Other
+Linux distributions and Gluster 11.2 have not been qualified. This is version
+`0.1.0` beta, licensed [GPL-2.0-only](COPYING); see
+[maintainer credit](MAINTAINERS.md) and the [beta.3 release notes](docs/RELEASE_NOTES_v0.1.0-beta.3.md).
+
+## Setup and further use
+
+The [bootstrap guide](docs/BOOTSTRAP.md) covers checkout, administrator SSH
+keys, host trust, passwordless sudo, preflight, installation and verification.
+It supports only the `gluster-repair` service account at
+`/var/lib/gluster-repair` and installed files under `/opt/gluster-repair`.
+The separate [update script](docs/DEPLOY_PREVIEW.md) has its own preview and
+preflight contract. Keep controller and deployed helper versions matched; see
+the [host-helper contract](docs/HOST_HELPER_CONTRACT.md).
+
+The core works without Codex or private helpers. The optional
+`gluster-repair-agent` companion can guide setup and triage, but does not
+install the core or grant access. For Gluster recovery context, read the
+[operator guide](docs/GLUSTER_GUIDE.md).
+
+The command-line interface also supports manifests, apply plans, bounded
+directory comparisons and canaries. These are implemented interfaces, not
+claims that every branch has live repair proof. See
+`python3 gluster-manager.py --help` and the
+[first-beta plan](docs/FIRST_BETA_RELEASE_PLAN.md).
+
+For local inspection without a cluster, use Linux and Python 3.12 or newer:
 
 ```bash
 python3 gluster-manager.py --help
-python3 gluster-manager.py health-check --volume example-volume
-python3 gluster-manager.py repair --volume example-volume --preview
-```
-
-Replace `example-volume` with your volume name. The health check queries the
-cluster; a repair preview may collect remote evidence and trigger mount
-lookups, so run it only against a cluster you administer. Review the saved
-evidence and proposed actions before using the guided interactive flow:
-
-```bash
-python3 gluster-manager.py repair --volume example-volume --interactive
-```
-
-The interactive flow asks before ready-safe writes. The beta's public
-repair-write scope remains a supervised nonempty missing-replica restore
-on the stated lab baseline. Other write recipes remain experimental despite
-the representative lab canaries above; full
-namespace healing and native-resolver tool writes are disabled. See the
-[compatibility profile](docs/GLUSTER_COMPATIBILITY.md) and
-[safety rules](steering/SAFETY_INVARIANTS.md) before executing any repair.
-
-## Capabilities
-
-- Manager/worker discovery of logical objects from heal rows, paths, GFIDs,
-  GFID-child entries, or backend evidence.
-- Manifest, plan, apply-preview, decision cards, and bounded directory comparisons.
-- Guided repair, explicit execution, health/heal control, and verification,
-  within the qualification limits above.
-- Backup/restore and canary commands, with the limitations in the open review.
-
-These are implemented interfaces, not guarantees that every branch is qualified.
-The core has no dependency on Codex, installed agent skills, or private helpers.
-An optional agent companion is maintained in a separate tree.
-
-## Start from source
-
-Use Linux and Python 3.12 or newer for this candidate. The broader interpreter
-and distribution matrix remains unqualified. Source-checkout help and unit
-tests do not require a live Gluster cluster:
-
-```bash
-python3 gluster-manager.py --help
-python3 gluster-heal-tool.py --help
-python3 gluster-worker.py --help
 python3 -m unittest discover -s tests -v
 ```
 
-See [local portability and deployment limits](docs/PORTABILITY.md) for the
-tested environment, state paths and remaining clean-host checks. The
-[Gluster compatibility profile](docs/GLUSTER_COMPATIBILITY.md) records which
-write commands and output shapes have live qualification.
-
-Live operations additionally need the matching Gluster client/CLI, SSH and
-authorized remote workers. Individual operations use rsync, tar, attr/ACL
-utilities, mount tools, and constrained privilege on brick hosts. Inspect each
-operation's help and host requirements before deployment.
-
-Bootstrap preserves the Python package layout and checks all installed entry
-points. Local tests cover fresh installation, repeated upgrades and preflight
-without key creation or staging. Only the default service account and install
-paths are supported. Fresh installation, service restrictions, peer SSH,
-repeat installation, selected failure cases and sequential reboots passed on
-three disposable Ubuntu 24.04 guests; additional platforms remain open. See the
-[bootstrap contract](docs/BOOTSTRAP.md) for commands and limits.
-The separate update script's [dry-run and preflight contract](docs/DEPLOY_PREVIEW.md)
-keeps previews read-only; its remote deployment still needs host qualification.
-Controller and deployed helper versions must agree; see the
-[host-helper contract](docs/HOST_HELPER_CONTRACT.md) for supported metadata
-commands and the limits of the scoped privileged qualification.
+The broader interpreter and distribution matrix remains unqualified. See
+[portability limits](docs/PORTABILITY.md) for required live tools and state
+paths. The [implementation history](HISTORY.md) summarizes earlier design
+discoveries without importing private records.
 
 ## Evidence and planning
 

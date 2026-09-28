@@ -1,4 +1,156 @@
-# Bootstrap contract
+# Install on an existing Gluster volume
+
+Bootstrap sets up the restricted `gluster-repair` account and tool files on
+each brick host. It does **not** create a Gluster cluster or volume. This guide
+starts with the human administrator's access, then runs the installer. The
+tested setup is Ubuntu 24.04 LTS with Gluster 11.1 and a pure Replicate volume.
+Use [Gluster's volume setup guide](https://docs.gluster.org/en/main/Administrator-Guide/Setting-Up-Volumes/)
+and installation instructions appropriate to your package version if you do
+not yet have a working volume.
+
+## 1. Choose the controller and check the volume
+
+Work on a Gluster node that can query the intended volume and reach every
+brick host by the hostnames shown in `gluster volume info`. The same account
+will run the tool after installation. Confirm the volume is `Type: Replicate`,
+all intended bricks are online, native healing has been allowed to finish,
+and you have a current independent backup. Replace `example-volume` in this
+guide with the real volume name.
+
+The controller needs Bash, Git, OpenSSH client tools, Python 3.12 or newer and
+the Gluster CLI. Each brick host needs its existing Gluster installation, an
+SSH server, sudo, Python 3.12 or newer and the command-line utilities used by
+the selected repair operations, including rsync, tar and ACL/xattr tools.
+For Ubuntu 24.04, the CLI package is
+[`glusterfs-cli`](https://packages.ubuntu.com/noble/glusterfs-cli); use the
+package source matching your cluster rather than changing Gluster versions
+just to install this tool.
+
+Check the controller's access with one of these commands:
+
+```bash
+gluster volume info example-volume
+sudo -n gluster volume info example-volume
+```
+
+The second is needed only when the first is denied. Volume bootstrap and the
+tool can retry this read through `sudo -n`. If both fail, set up the controller
+privilege in step 4, then repeat the check. Also inspect `gluster volume status
+example-volume` and `gluster volume heal example-volume info` (with `sudo -n`
+if needed) before deciding native healing is complete.
+
+## 2. Get the source on the controller
+
+Open the public `gluster-repair-tool` repository named in
+[project repositories](../MAINTAINERS.md#project-repositories), choose
+**Code → HTTPS**, and copy its clone URL. Replace `REPOSITORY_URL` with that URL:
+
+```bash
+git clone REPOSITORY_URL
+cd gluster-repair-tool
+python3 gluster-manager.py --help
+```
+
+Keep this checkout on the controller. Bootstrap copies the matching runtime
+files from it to the brick hosts. A signed release tag can be checked out for
+a frozen version; keep controller and deployed files on the same revision.
+
+## 3. Set up the administrator SSH key and host trust
+
+On the controller, use an existing `~/.ssh/id_ed25519` keypair or create one
+only if neither file exists:
+
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519
+```
+
+Choose a passphrase and load the key into your SSH agent before unattended
+bootstrap. On a headless terminal, `ssh-agent bash` opens a shell with an
+agent; inside it run `ssh-add ~/.ssh/id_ed25519`. Do not put private keys or
+passphrases in the repository. If your key has another name, pass both `-i`
+and `-p` to the bootstrap commands below.
+
+Verify each brick host's SSH fingerprint through a trusted channel before
+accepting its first host-key prompt. Give the **administrator's public key**
+to the login account on every brick host. For hosts that allow an initial
+password login, repeat this pattern for each host:
+
+```bash
+ssh-copy-id -i ~/.ssh/id_ed25519.pub operator@brick-a
+ssh operator@brick-a true
+```
+
+If password SSH is disabled, use your console, image provisioning or existing
+administrator access to install the public key in that account's
+`authorized_keys`. Repeat the login check for every brick hostname reported
+by the volume. This also records their verified host keys in the controller's
+`known_hosts`; the volume installer needs those entries for peer transfers.
+
+## 4. Arrange noninteractive administrator sudo
+
+The administrator login on **each brick host** must run `sudo -n true` during
+preflight and `sudo -n bash -s` for the actual installer. If the controller's
+plain Gluster CLI is denied, it also needs `sudo -n gluster` locally. The
+installer creates a separate, restricted sudoers policy for `gluster-repair`;
+that service policy does not provide the initial administrator access.
+
+An already authorized administrator can create a temporary bootstrap rule on
+each host with `sudo visudo -f /etc/sudoers.d/gluster-bootstrap-admin` and this
+line, replacing `operator` with the actual login:
+
+```text
+operator ALL=(root) NOPASSWD: ALL
+```
+
+This grants broad root access to that administrator. Use it only under your
+site's access policy, and review or remove the bootstrap rule after setup.
+Keep whatever noninteractive Gluster CLI access the controller needs for later
+health and repair commands. Confirm the remote rule on each host:
+
+```bash
+ssh operator@brick-a sudo -n true
+ssh operator@brick-a sudo -n id -u
+```
+
+The second command should print `0`. A passing `sudo -n true` alone cannot
+prove that the installer can run; the real install is the final check.
+
+## 5. Check, install and verify
+
+From the controller checkout, run preflight first, then the same command
+without `--preflight`. These commands discover the brick hosts from the named
+volume; they do not create the volume.
+
+```bash
+./gluster-bootstrap-volume.sh -v example-volume -l operator --preflight
+./gluster-bootstrap-volume.sh -v example-volume -l operator
+```
+
+Preflight checks the existing local keypair, verified host keys, batch SSH and
+`sudo -n true` without creating service keys or staging files. Installation
+creates or reuses the `gluster-repair` account and shared service key, copies
+the tool, verifies its entry points, and installs its own sudoers drop-in. A
+failed or interrupted install can leave partial state; inspect the error and
+installed files before retrying.
+
+For every brick host, confirm the service login and installed files, then run
+the tool from the controller. For example:
+
+```bash
+ssh gluster-repair@brick-a true
+ssh operator@brick-a /opt/gluster-repair/gluster-manager.py --help
+python3 gluster-manager.py health-check --volume example-volume
+python3 gluster-manager.py repair --volume example-volume --preview
+```
+
+The first repair run should be a preview. It may contact hosts and trigger
+native healing through mount lookups but does not execute repair writes. If a
+problem remains after native healing, read the [beta limits](../README.md#beta-scope)
+before using `repair --interactive` in a terminal. For setup help, the
+optional `gluster-repair-agent` companion can guide these steps; it does not
+grant SSH or sudo access.
+
+## Installer contract and limits
 
 Bootstrap installs the six runtime entry points and the `gluster_heal_tool/`
 package on each selected brick host. It reuses existing service keys and
@@ -16,37 +168,13 @@ service account with a different home also fails before account or installation
 changes on that host. Runtime helpers currently depend on the default paths;
 custom layouts require a coordinated runtime change.
 
-## Preflight
+## Preflight details
 
-### First access is an administrator step
-
-A bare host is not expected to have an operator key, trusted SSH host keys,
-the repair account, or the tool's sudoers policy. Bootstrap currently starts
-after an administrator has established the initial login. It uses batch SSH
-and noninteractive sudo; it has no password-entry or first-access wizard.
-
-Use the console or an already authorized administrative login to provision
-required packages and the initial operator access. Verify the host fingerprint
-through a trusted channel before recording it. Create or select the operator
-key through the operator's normal key-management workflow; never place private
-keys or passwords in the source tree, command history, test reports or support
-bundles. A passphrase-protected key must already be usable by the invoking SSH
-process, for example through the operator's unlocked agent.
-
-For a non-root installation login, the administrator must separately arrange
-permission to execute the remote installer as root. The preflight's
-`sudo -n true` probe checks only that command; it does not prove permission for
-the later `sudo -n bash -s` installer. Record this prerequisite explicitly and
-test the actual installation on disposable hosts. Temporary installation
-privileges belong to the bootstrap administrator, not to the repair service
-account, and must be removed or reviewed when setup is complete.
-
-Supply an existing operator SSH private/public key pair and verify each host's
-SSH key in the operator's `known_hosts` before running preflight:
+For a single host, or to diagnose a volume preflight failure, check one host
+directly with the same administrator key:
 
 ```bash
 ./gluster-bootstrap-host.sh -H host-a -l operator -i ~/.ssh/id_ed25519 -p ~/.ssh/id_ed25519.pub --preflight
-./gluster-bootstrap-volume.sh -v example-volume --preflight
 ```
 
 Host preflight checks local source/key files, noninteractive SSH access and
@@ -56,16 +184,18 @@ stage files, or run the remote installer. Volume preflight discovers a pure
 Replicate volume, reads existing verified keys for every peer, and performs
 the host checks without creating a temporary known-hosts file.
 
-Preflight is an access check: target Python, imports, account compatibility,
-file installation and sudoers validation are checked during installation.
-A missing operator public key is an error in both modes; bootstrap never
-regenerates or overwrites the operator private key.
+Preflight is an access check, not an installation check: target Python, imports,
+account compatibility, file installation and sudoers validation are checked
+during installation. A missing operator public key is an error in both modes;
+bootstrap never regenerates or overwrites the operator private key.
 
-## Installation and verification
+## Installation details
 
 Run the same command without `--preflight` when installation is intended.
 Execution may create a shared service keypair locally and accept new SSH host
-keys. A partial service keypair is refused. Volume bootstrap installs the
+keys. The shared key has no passphrase because brick-to-brick transfers are
+noninteractive; protect the controller's copy and each service account home.
+A partial service keypair is refused. Volume bootstrap installs the
 controller's verified peer keys for service-account transfers.
 
 The transport preserves the package directory. Before installing tool files,

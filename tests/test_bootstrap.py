@@ -193,6 +193,29 @@ print(args[1] + ' ssh-ed25519 fixture-key')""")
         self.assertIn("no verified SSH host key found for brick host host-b", result.stderr)
         self.assertFalse(any(name in {"ssh", "scp", "mktemp"} for name,args in self.calls()))
 
+    def test_volume_preflight_uses_noninteractive_sudo_for_controller_discovery(self):
+        self.volume_fixture()
+        self.stub("gluster", "raise SystemExit(1)")
+        self.stub("sudo", """if args != ['-n', 'gluster', 'volume', 'info', 'fixture']:
+    raise SystemExit('unexpected sudo command')
+print('Type: Replicate\\nBrick1: host-a:/fixture/a\\nBrick2: host-b:/fixture/b')""")
+        result = self.run_volume_preflight()
+        self.assertEqual(0, result.returncode, result.stderr)
+        calls = self.calls()
+        self.assertEqual(1, sum(name == "gluster" for name, _ in calls))
+        self.assertEqual(1, sum(name == "sudo" for name, _ in calls))
+        self.assertEqual({"fixture-user@host-a", "fixture-user@host-b"},
+                         {arg for name, args in calls if name == "ssh" for arg in args if arg.startswith("fixture-user@")})
+
+    def test_volume_preflight_refuses_without_controller_discovery_access(self):
+        self.volume_fixture()
+        self.stub("gluster", "raise SystemExit(1)")
+        self.stub("sudo", "raise SystemExit(1)")
+        result = self.run_volume_preflight()
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("cannot read volume fixture", result.stderr)
+        self.assertFalse(any(name in {"ssh", "scp", "mktemp"} for name, _ in self.calls()))
+
     def test_volume_custom_layout_fails_before_discovery(self):
         self.volume_fixture()
         result = self.run_volume_preflight("-m", "/custom/home")

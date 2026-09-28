@@ -87,11 +87,13 @@ accessible replica are evidence, not universal winner rules.
 
 ## Current limits
 
-This is a pre-release candidate. The [open review](../steering/PRE_EXPORT_REVIEW.md)
-found execution-gate, dependency, interrupted-write, remote-backup, bootstrap,
-and evidence gaps despite a passing test suite. Those findings take precedence
-over historical success summaries. Use the current source for development and
-controlled evaluation; do not treat the agent companion as an unattended healer.
+This is a public beta with a narrow live repair claim: one supervised nonempty
+missing-replica file restore on the listed Ubuntu 24.04 / Gluster 11.1 lab.
+Other repair recipes remain experimental. Tool-driven full namespace heal and
+native per-file resolver writes are disabled. See the [release notes](RELEASE_NOTES_v0.1.0-beta.3.md),
+[validation](VALIDATION.md) and [compatibility profile](GLUSTER_COMPATIBILITY.md)
+before a write. Neither the core nor the optional companion is an unattended
+healer.
 
 Native healing and preserved evidence should guide the next action. Where
 source authority or reversibility is unresolved, retain the review case and

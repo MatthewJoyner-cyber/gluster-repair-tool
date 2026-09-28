@@ -1,5 +1,19 @@
 # Migration candidate validation
 
+## Onboarding revision after beta.3 (2026-09-28)
+
+The README now leads with capabilities, replica-3 scope and the guided simple
+repair path, while BOOTSTRAP.md
+walks from a fresh administrator SSH login and passwordless sudo through
+preflight, installation and verification. The volume bootstrap now reads
+`gluster volume info` once and retries through `sudo -n` when the controller
+account cannot query it directly. Focused bootstrap tests passed (14 tests),
+including fallback success and refusal without CLI access; the complete
+offline suite passed (865 tests, one environment-dependent skip). Shell syntax,
+CLI help, source privacy and documentation checks passed. No VM or live cluster
+was changed for this revision. The signed beta.3 release tag remains unchanged;
+this source revision has no new release tag or live installation proof.
+
 ## First public beta publication (2026-09-27)
 
 The two independent clean repositories were made public after the scoped

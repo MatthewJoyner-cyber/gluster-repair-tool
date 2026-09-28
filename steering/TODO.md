@@ -3,6 +3,15 @@
 Use [release preparation](../docs/RELEASE_PREPARATION.md) for the publication
 sequence. Verify both repository destinations and selected release revisions.
 
+## Onboarding revision (2026-09-28)
+
+- [x] Review the README/bootstrap rewrite and controller `sudo -n` discovery
+  fallback. The revised guide leads with capabilities, replica-3 scope and
+  simple mode, then covers administrator keys, host trust, sudo, preflight,
+  installation and verification. Offline tests and privacy checks passed; no
+  live installation was repeated. The beta.3 release tag remains unchanged;
+  see [validation](../docs/VALIDATION.md).
+
 ## First-beta queue (2026-09-27)
 
 The [first-beta plan](../docs/FIRST_BETA_RELEASE_PLAN.md) is the acceptance

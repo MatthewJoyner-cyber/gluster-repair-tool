@@ -25,7 +25,7 @@ Options:
   -h, --help         Show help
 
 Behavior:
-  - Discovers brick hosts from `gluster volume info <VOLUME>`
+  - Discovers brick hosts from `gluster volume info <VOLUME>` with sudo -n fallback
   - Bootstraps each host in turn using gluster-bootstrap-host.sh
   - Installs controller-verified peer host keys for brick-to-brick service transfers
   - Reuses accounts and service keys; updates tool files and sudoers
@@ -81,8 +81,15 @@ if [[ ! -f "$LOGIN_PRIVKEY_PATH" ]]; then
   exit 1
 fi
 
+if ! VOLUME_INFO="$(gluster volume info "$VOLUME" 2>/dev/null)"; then
+  if ! VOLUME_INFO="$(sudo -n gluster volume info "$VOLUME" 2>/dev/null)"; then
+    echo "ERROR: cannot read volume $VOLUME with gluster or sudo -n gluster; grant the controller account noninteractive Gluster CLI access" >&2
+    exit 1
+  fi
+fi
+
 mapfile -t HOSTS < <(
-  gluster volume info "$VOLUME" |
+  printf '%s\n' "$VOLUME_INFO" |
     awk -F: '
       $1 ~ /^Brick[0-9]+/ {
         gsub(/^[[:space:]]+|[[:space:]]+$/, "", $2);
@@ -91,7 +98,7 @@ mapfile -t HOSTS < <(
     '
 )
 
-VOLTYPE="$(gluster volume info "$VOLUME" | awk -F: '$1=="Type" {gsub(/^[[:space:]]+|[[:space:]]+$/, "", $2); print $2; exit}')"
+VOLTYPE="$(printf '%s\n' "$VOLUME_INFO" | awk -F: '$1=="Type" {gsub(/^[[:space:]]+|[[:space:]]+$/, "", $2); print $2; exit}')"
 if [[ "$VOLTYPE" != "Replicate" ]]; then
   echo "ERROR: volume $VOLUME is type '$VOLTYPE'; only pure Replicate volumes are supported by this bootstrap." >&2
   exit 1
